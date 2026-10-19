@@ -9,10 +9,10 @@ O projeto **Prospecta IA** no Supabase já está conectado pelo código. As tabe
 1. Abra o site, escolha o estado e selecione uma cidade no catálogo pesquisável. Se desejar, informe segmento, palavra-chave e bairro.
 2. Clique em **Buscar comércios**. **Não é preciso cadastro, login ou código de acesso**, inclusive para atualizar os detalhes da fonte.
 3. Os novos resultados são salvos automaticamente neste navegador. A conta é opcional para sincronização entre dispositivos; você pode entrar pelo menu quando desejar.
-4. Abra a ficha, confirme a identidade e registre as evidências. A pontuação depende do que foi verificado, sem inventar probabilidade de compra.
-5. Gere o briefing completo em **Prompt do site**. Contatos e mensagens exigem revisão; WhatsApp só é ativado para um número confirmado com país e DDD.
+4. Cada cartão já mostra o potencial comercial de 0–100, a prioridade, os motivos e a confiança da avaliação. A análise inicial usa os dados publicados e hipóteses específicas do segmento; confirmar identidade e registrar evidências melhora a avaliação. A nota não é uma probabilidade estatística de compra.
+5. Abra **Ver prompt pronto** para copiar ou baixar o prompt profissional completo, organizado em 14 seções e adaptado ao segmento, nome, localização e demais dados disponíveis. A personalização adicional é opcional. Contatos e mensagens exigem revisão; WhatsApp só é ativado para um número confirmado com país e DDD.
 
-O gerador funciona por **template local de 14 seções**, sem API paga ou configuração de IA. Ele não executa um modelo generativo. O conteúdo pode ser copiado ou baixado para outra ferramenta, conforme as permissões da fonte.
+Os prompts são preparados automaticamente no navegador por **15 perfis de segmento e uma estrutura de 14 seções**, sem API paga ou configuração de IA. Incluem direção comercial, design e paleta propostos, arquitetura, copy, funcionalidades, ativos, acessibilidade, SEO local, requisitos técnicos e testes. A identidade visual só é descrita como observada quando há registro; dados ausentes são identificados para confirmação. O sistema não executa um modelo generativo. O conteúdo pode ser copiado ou baixado para outra ferramenta, conforme as permissões da fonte.
 
 Cadastro/importação/briefings também funcionam no espaço local sem login. Dados locais ficam neste navegador; dados da conta ficam no Supabase com RLS por usuário. Essas bases não são misturadas automaticamente. A demonstração é fictícia e separada, somente em memória.
 
@@ -46,6 +46,14 @@ npm run build
 - Até 50 candidatos no Photon; até 100 objetos e 50 resultados na contingência Overpass. Palavra-chave/bairro filtram a amostra. A cobertura é parcial, os contatos podem não estar disponíveis e não há paginação externa.
 - A falta de website no cadastro não comprova ausência de site. Telefones não viram WhatsApp automaticamente. Falhas externas nunca são substituídas por comércios inventados.
 - Atribuição **© OpenStreetMap contributors**, licença ODbL e fontes são preservadas nas exportações. Consulte [fontes e permissões](docs/FONTES.md).
+
+## Avaliação e prompts automáticos
+
+- Novas buscas, cadastros e importações já recebem um prompt pronto. Bases antigas são atualizadas em memória ao carregar, sem refazer a busca e sem envio de dados a um provedor de IA.
+- `evaluateOpportunity` calcula potencial de venda e prioridade desde o primeiro cadastro. As hipóteses por segmento são identificadas; contato, interesse e presença digital confirmados prevalecem sobre sugestões. A confiança inicial é baixa quando faltam verificações. Negócios encerrados, perdidos ou suprimidos ficam fora da prospecção ativa.
+- A nota de evidências `calculateScore` e os snapshots anteriores permanecem disponíveis. Nenhuma regra inventa orçamento ou disposição de compra; a ausência de site na amostra não comprova ausência de site real.
+- O prompt automático acompanha mudanças nos dados e nas permissões sem acumular cópias. Edições e versões manuais são preservadas. O texto derivado é reconstruído dos dados ao carregar, evitando multiplicar armazenamento e tráfego por comércio; edições manuais são salvas normalmente.
+- A versão padrão para IA inclui apenas os campos com retenção, exportação e IA permitidas. Se o nome só permitir exportação, o prompt fica identificado para uso interno. Sem fonte exportável vigente, não é criado um prompt exportável.
 
 ## Conta e sincronização
 

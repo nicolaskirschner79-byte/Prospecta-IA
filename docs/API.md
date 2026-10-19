@@ -20,6 +20,8 @@ Não há POST HTTP fictício para IA ou score. Estes contratos são funções re
 
 | Função | Entrada → saída |
 |---|---|
+| `evaluateOpportunity(business,settings,now?)` | dados disponíveis e evidências → `{score,priority,confidence,confidenceLabel,coverage,parts,reasons,offer,nextAction,preliminary,probability:null}`; avaliação inicial automática, sem chamadas externas |
+| `ensureReadyPrompt(business,settings)` | prepara/atualiza uma versão automática em `business.prompts`, idempotente por dados, versão e permissões; retorna prompt pronto ou `null` sem fonte exportável |
 | `calculateScore(business,settings,now?)` | negócio + regras → `{score,coverage,priority,eligible,parts,pending,reasons,version,weights,thresholds,at}` |
 | `generateBriefing(business,settings,options)` | dados exportáveis + objetivo/estilo/páginas/funcionalidades → texto integral, 14 seções, uso interno |
 | `generateForAI(business,settings,options)` | interseção de dados permitidos para IA e exportação → texto integral; não executa um modelo |
@@ -53,3 +55,9 @@ Busca e detalhes não consultam Auth nem reservam quota por conta; uma sessão e
 O frontend usa GET canônico, cache de até oito pesquisas e cancelamento por AbortController, com prazo de 18 s independente do transporte. Respostas de erro e respostas canceladas não entram no cache. A resposta bem-sucedida inclui `collectedAt` e `cache` (`miss`, `fresh` ou `stale`); cabeçalhos de cache da CDN não são habilitados para erros, auditorias, preferências ou notas.
 
 Catálogo da interface: `GET /data/cities/{UF}.json`, com UF oficial em maiúsculas, retorna `[{id:number,name:string}]`. São arquivos estáticos do mesmo site, com nomes oficiais acentuados e códigos IBGE. Não requer login nem chamada externa. Trocar a UF limpa a seleção; a cidade é validada no catálogo carregado antes da pesquisa.
+
+## Prompt pronto e armazenamento
+
+A preparação é local: `readLocal`, `persist`, `persistBatch`, carga da conta e abertura da ficha preparam os prompts automaticamente. A resposta HTTP da busca continua leve, com os dados de origem; nenhum prompt é solicitado a um modelo externo. O prompt pronto usa 15 perfis de segmento, dados específicos e 14 seções. A versão automática contém `automatic:true`, `generatorVersion`, `inputKey`, `destination`, `sourceIds`, `expiresAt` e permissões. Campos excluídos por validade, conflito ou licença não retornam por meio da geração automática. A validade acompanha a menor validade de campo/fonte utilizado.
+
+Somente versões manuais precisam persistir seu texto. O serializador omite a versão automática derivada; ela é reconstruída dos dados ao carregar localmente ou na conta. Isso evita duplicar cerca de 13 KB de texto por comércio no armazenamento ou tráfego. Edições são versões com `automatic:false`, preservadas nas gravações. Recalcular não sobrescreve evidências nem snapshots da regra anterior.

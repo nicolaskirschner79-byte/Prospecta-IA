@@ -4,7 +4,7 @@ Manutenção em 19/10/2026. Runtime: Node.js 24.19.0.
 
 ## Código e fluxos automatizados
 
-`npm run build` executa verificação de sintaxe/ativos e a suíte Node. A suíte contém **70 testes**, incluindo:
+`npm run build` executa verificação de sintaxe/ativos e a suíte Node. A suíte contém **82 testes**, incluindo:
 
 - Configuração sem `.env.local`, projeto Supabase conectado, substituições opcionais sem misturar chaves de projetos diferentes e ausência de segredos na resposta pública.
 - Busca/detalhes públicos sem chamadas a Auth/REST, inclusive com token inválido; limite por visitante/instância, intervalo entre chamadas e proteção contra cabeçalho de IP forjado fora da Vercel. Auditoria mantém autenticação pelo contrato `/auth/v1/user` e reserva de quota. Nestes testes de contrato, o transporte externo é substituído por fixtures.
@@ -17,6 +17,15 @@ Manutenção em 19/10/2026. Runtime: Node.js 24.19.0.
 - Direitos/validade por campo/fonte, CSV seguro, WhatsApp confirmado, pontuação determinística, cobertura desconhecida e exclusão de registros suprimidos do ranking.
 - Auditoria restrita à operação e proteção SSRF, incluindo esquemas, portas, IPs privados/reservados/metadados e DNS misturado. Testes da auditoria usam páginas de teste, sem afirmar inspeção de empresa real.
 - Schema, políticas e função de quota executados em Postgres PGlite, com duas identidades e tentativas de leitura/alteração entre contas.
+
+## Avaliação e prompts automáticos
+
+- Novos testes verificam avaliação inicial não zerada sem formulário, separação de hipótese e evidência, contatos confirmados, desconhecimento de interesse, preservação de avaliações negativas, bloqueio de conflitos e fontes vencidas, exclusão de negociações encerradas e pesos personalizados.
+- Os 15 segmentos são exercitados com dados específicos do comércio: 14 seções, arquitetura, design, copy, funções, SEO e critérios de entrega; sem dados inventados para preencher contatos ou identidade visual.
+- O fluxo DOM/HTTP confirma prompt pronto antes de gerar uma versão manual, cópia integral imediata, disponibilidade após reload e preservação de edição manual. A preparação não adiciona consultas à fonte.
+- Geração idempotente, atualização por mudança de dados/permissões, remoção de campos proibidos para IA, validade mínima e preparo de 50 comércios também são verificados. O texto automático é reconstruído para evitar aumento desnecessário do armazenamento.
+
+O fluxo real DOM → HTTP → Photon foi repetido com esta versão: 50 registros retornados, avaliados e com prompts disponíveis em cerca de 6,5 s. Reconstruir os 50 prompts levou aproximadamente 11 ms nesse teste; abrir o prompt do primeiro cartão não realizou nova consulta externa. As notas iniciais ficaram baixas, com baixa confiança, condizentes com a amostra sem evidências de compra. Não se trata de benchmark contínuo nem probabilidade de conversão.
 
 ## Verificado no Supabase conectado
 

@@ -1,4 +1,22 @@
-# Índice de oportunidade, regra 1.0.0
+# Avaliação automática de potencial comercial, regra 2.0.0
+
+A interface usa `evaluateOpportunity` para avaliar todos os comércios desde a primeira busca. Retorna score de 0–100, prioridade, motivos, proposta, próxima ação, confiança e cobertura de evidências. `probability` é `null`: a plataforma não tem dados de conversão para estimar uma probabilidade de fechamento calibrada. A nota organiza a prospecção e não presume dinheiro, intenção ou decisão de compra.
+
+| Critério | Pontuação inicial padrão | Evolução com evidências |
+|---|---|---|
+| Oportunidade digital, peso 45 | Domínio informado: 5; somente rede cadastrada: 15; nenhum domínio/rede: 12, como oportunidade de investigação | Critério digital verificado da regra de evidências substitui integralmente a hipótese; não se acumulam pontos |
+| Informações/operação, peso 20 | Completude de nome, cidade, endereço, horários, descrição e serviços: até 4 pontos por verificação ainda desconhecida, máximo 8 | Atividade recente e consistência confirmadas: até 10 cada; respostas negativas valem zero e prevalecem |
+| Utilidade de um site, peso 15 | Até 15 para segmentos definidos, 6 para outros serviços; hipóteses explicadas pelo perfil | Caso de uso, organização e benefício registrados substituem cada hipótese; um resultado negativo não é substituído por uma sugestão |
+| Contato, peso 10 | Telefone/e-mail publicado: 3; rede social: 1; sem canal: 0 | WhatsApp confirmado: 7; outro canal confirmado: 3; pesquisa sem contato não inventa canal |
+| Negociação, peso 10 | Sem sinal registrado: zero | Interesse explícito: 5; próximo passo confirmado: 5 |
+
+Os valores escalam pelos pesos configurados, sem dividir pela cobertura para produzir notas altas. Os mesmos limiares configuráveis de prioridade se aplicam. O cadastro incompleto já tem avaliação preliminar; não precisa aguardar um formulário manual para ser ordenado. A maior parte das amostras sem contato nem evidências permanece com nota e confiança baixas, em vez de receber uma alta chance inventada.
+
+Confiança alta exige identidade, elegibilidade e pelo menos 80% de cobertura da análise por evidências; média exige identidade confirmada e 40%; demais casos são baixos. Isso descreve a base da avaliação, sem representar intervalo estatístico de confiança. Conflitos ou identidade negada bloqueiam prioridade ativa; fontes vencidas não contam. Não contatar, encerrado, duplicado, fora do escopo, Fechado, Perdido e falta de interesse explicitamente registrada ficam fora da prospecção ativa.
+
+Os perfis por segmento também orientam o que propor e o próximo passo. A classificação usa dados permitidos para retenção e não realiza navegação, auditoria ou uma chamada de IA escondida.
+
+## Índice de evidências, regra 1.0.0
 
 Índice de 0–100 para organizar investigação e abordagem. **Não é probabilidade de fechamento**. A função pura `calculateScore` retorna pontos, pesos cobertos, justificativas, motivos, pendências, versão e data. As regras e os limites usados ficam nos snapshots; uma mudança de configuração afeta a análise atual, sem alterar o histórico.
 
