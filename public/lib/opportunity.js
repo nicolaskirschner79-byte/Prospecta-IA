@@ -1,4 +1,4 @@
-import {DEFAULT_SETTINGS,safeURL,whatsappURL} from './domain.js';
+import {DEFAULT_SETTINGS,safeURL,whatsappURL,normalizeText} from './domain.js';
 import {permitted,canRetain} from './permissions.js';
 import {calculateScore} from './score.js';
 import {siteProfile} from './site-profiles.js';
@@ -37,7 +37,9 @@ export function evaluateOpportunity(b,settings=DEFAULT_SETTINGS,now=Date.now()){
   add('interest','Sinais de negociação',interest/10*w.interest,w.interest,
     interestKeys.filter(key=>known(key)).map(key=>a[key].reason).join(' · ')||'Ainda não há interesse nem próximo passo registrados. Orçamento e decisão de compra são desconhecidos.','evidence');
   const declined=known('interest')&&a.interest.value===false;
-  const excluded=evidence.priority==='excluded'||b.stage==='Perdido'||b.stage==='Fechado'||declined;
+  const name=normalizeText(value('name'));
+  const publicInstitution=b.segment==='education'&&/^(escola|creche)\s+(estadual|municipal|publica)\b/.test(name)||b.segment==='health'&&/^(ubs\b|unidade basica de saude\b)/.test(name);
+  const excluded=evidence.priority==='excluded'||b.stage==='Perdido'||b.stage==='Fechado'||declined||publicInstitution;
   const conflict=['name','city','uf','address','website'].some(key=>b.fields?.[key]?.status==='conflict');
   const eligible=!excluded&&!conflict&&canRetain(b)&&!(known('identity')&&a.identity.value===false);
   const score=excluded?0:Math.min(100,Math.round(parts.reduce((sum,p)=>sum+p.points,0)));
@@ -50,7 +52,7 @@ export function evaluateOpportunity(b,settings=DEFAULT_SETTINGS,now=Date.now()){
     site&&digital.covered===0?'Confirmar que o domínio pertence à empresa e verificar melhorias antes de propor uma reformulação.':`Validar com a empresa a proposta: ${profile.objective.toLowerCase()}.`;
   if(!publishedContact&&!confirmedWA&&!social)nextAction='Localizar e confirmar um canal oficial de contato. '+nextAction;
   if(known('interest')&&a.interest.value===false)nextAction='Respeitar a resposta registrada e revisar se existe autorização ou motivo para um próximo contato.';
-  if(!eligible)nextAction=declined?'Respeitar a resposta de falta de interesse registrada. Retomar somente se houver novo contexto ou iniciativa do comércio.':excluded?'Registro fora da prospecção ativa.':'Resolver a identidade, os conflitos ou a validade das fontes antes da abordagem.';
+  if(!eligible)nextAction=publicInstitution?'O nome do cadastro indica uma escola ou unidade de saúde pública. Conferir a natureza da instituição; fora da prioridade de comércios privados.':declined?'Respeitar a resposta de falta de interesse registrada. Retomar somente se houver novo contexto ou iniciativa do comércio.':excluded?'Registro fora da prospecção ativa.':'Resolver a identidade, os conflitos ou a validade das fontes antes da abordagem.';
   return {score,priority,eligible,parts,coverage:evidence.coverage,dataCoverage:Math.round(completeness*100),confidence,confidenceLabel,preliminary,
     reasons:parts.filter(p=>p.points>0).sort((x,y)=>y.points-x.points).slice(0,3).map(p=>p.id==='fit'&&p.mode==='hypothesis'?profile.angle:p.reason),pending:evidence.pending,
     version:`${OPPORTUNITY_VERSION}/config-${settings.rulesVersion}`,at:new Date(now).toISOString(),evidenceScore:evidence.score,

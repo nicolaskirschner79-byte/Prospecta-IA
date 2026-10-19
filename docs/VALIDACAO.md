@@ -4,7 +4,7 @@ Manutenção em 19/10/2026. Runtime: Node.js 24.19.0.
 
 ## Código e fluxos automatizados
 
-`npm run build` executa verificação de sintaxe/ativos e a suíte Node. A suíte contém **82 testes**, incluindo:
+`npm run build` executa verificação de sintaxe/ativos e a suíte Node. A suíte contém **83 testes**, incluindo:
 
 - Configuração sem `.env.local`, projeto Supabase conectado, substituições opcionais sem misturar chaves de projetos diferentes e ausência de segredos na resposta pública.
 - Busca/detalhes públicos sem chamadas a Auth/REST, inclusive com token inválido; limite por visitante/instância, intervalo entre chamadas e proteção contra cabeçalho de IP forjado fora da Vercel. Auditoria mantém autenticação pelo contrato `/auth/v1/user` e reserva de quota. Nestes testes de contrato, o transporte externo é substituído por fixtures.
@@ -25,7 +25,7 @@ Manutenção em 19/10/2026. Runtime: Node.js 24.19.0.
 - O fluxo DOM/HTTP confirma prompt pronto antes de gerar uma versão manual, cópia integral imediata, disponibilidade após reload e preservação de edição manual. A preparação não adiciona consultas à fonte.
 - Geração idempotente, atualização por mudança de dados/permissões, remoção de campos proibidos para IA, validade mínima e preparo de 50 comércios também são verificados. O texto automático é reconstruído para evitar aumento desnecessário do armazenamento.
 
-O fluxo real DOM → HTTP → Photon foi repetido com esta versão: 50 registros retornados, avaliados e com prompts disponíveis em cerca de 6,5 s. Reconstruir os 50 prompts levou aproximadamente 11 ms nesse teste; abrir o prompt do primeiro cartão não realizou nova consulta externa. As notas iniciais ficaram baixas, com baixa confiança, condizentes com a amostra sem evidências de compra. Não se trata de benchmark contínuo nem probabilidade de conversão.
+O fluxo real DOM → HTTP → Photon foi repetido com esta versão: 50 registros retornados, avaliados e com prompts disponíveis em cerca de 6,5 s. Reconstruir os 50 prompts levou aproximadamente 11 ms nesse teste; abrir o prompt do primeiro cartão não realizou nova consulta externa. As notas iniciais ficaram baixas, com baixa confiança, condizentes com a amostra sem evidências de compra. Não se trata de benchmark contínuo nem probabilidade de conversão. A verificação no navegador publicado também identificou escolas públicas e UBS na amostra: a avaliação agora os coloca fora da prioridade comercial quando nome e segmento os indicam, com justificativa e revisão de natureza.
 
 ## Verificado no Supabase conectado
 

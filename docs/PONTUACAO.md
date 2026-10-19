@@ -14,6 +14,8 @@ Os valores escalam pelos pesos configurados, sem dividir pela cobertura para pro
 
 Confiança alta exige identidade, elegibilidade e pelo menos 80% de cobertura da análise por evidências; média exige identidade confirmada e 40%; demais casos são baixos. Isso descreve a base da avaliação, sem representar intervalo estatístico de confiança. Conflitos ou identidade negada bloqueiam prioridade ativa; fontes vencidas não contam. Não contatar, encerrado, duplicado, fora do escopo, Fechado, Perdido e falta de interesse explicitamente registrada ficam fora da prospecção ativa.
 
+Registros de educação cujo nome começa por “Escola/Creche Estadual/Municipal/Pública” e registros de saúde iniciados por “UBS” ou “Unidade Básica de Saúde” ficam fora da prioridade de comércios privados. É uma indicação pelo nome, exibida como tal e sujeita a revisão; não é uma investigação jurídica da instituição.
+
 Os perfis por segmento também orientam o que propor e o próximo passo. A classificação usa dados permitidos para retenção e não realiza navegação, auditoria ou uma chamada de IA escondida.
 
 ## Índice de evidências, regra 1.0.0

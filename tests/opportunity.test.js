@@ -48,3 +48,11 @@ test('evidências suficientes e interesse real aumentam confiança; configuraç�
   const custom=validateSettings({...DEFAULT_SETTINGS,weights:{digital:10,operation:10,fit:10,contact:60,interest:10}});
   assert.ok(evaluateOpportunity(b,custom).score<result.score,'não há canal confirmado para receber pontos de contato');
 });
+
+test('escolas e unidades públicas identificadas pelo nome não são priorizadas como comércios privados',()=>{
+  for(const [name,segment]of [['Escola Estadual Exemplo','education'],['Escola Municipal Exemplo','education'],['UBS Vila de Teste','health']]){
+    const b=newBusiness({name,segment,city:'Itapeva',uf:'SP'}),result=evaluateOpportunity(b);
+    assert.equal(result.priority,'excluded');assert.equal(result.score,0);assert.match(result.nextAction,/nome do cadastro indica/);
+  }
+  for(const [name,segment]of [['Escola Particular de Teste','education'],['Clínica Exemplo','health'],['UBS Consultoria de Teste','other']])assert.equal(evaluateOpportunity(newBusiness({name,segment})).eligible,true);
+});
