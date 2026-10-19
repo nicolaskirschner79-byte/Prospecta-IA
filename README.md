@@ -38,8 +38,10 @@ npm run build
 ## Busca e disponibilidade
 
 - Fonte: OpenStreetMap, consultado pelo Overpass. Servidor principal `https://overpass-api.de/api/interpreter`; alternativa `https://overpass.private.coffee/api/interpreter` somente em falha transitória. Um HTTP 429 é respeitado, sem trocar de servidor para contornar a quota.
-- Cache de cinco minutos por instância, com limite de 12 consultas e agregação de chamadas simultâneas iguais. Cache preserva o horário da consulta original.
-- Cidade aceita diferenças de maiúsculas/acentos; Distrito Federal usa a área administrativa estadual. Nomes alternativos e áreas ausentes ainda podem produzir resultado vazio.
+- Cache por dez minutos no navegador e na instância, com agregação de chamadas iguais. Consultas GET públicas permitem cache na CDN do Vercel entre instâncias. Somente respostas bem-sucedidas são armazenadas; erros continuam sem cache. A data original da coleta é preservada.
+- Cidade/UF são resolvidas por um índice local dos 5.571 municípios da API oficial do IBGE (snapshot de 19/10/2026), sem nova chamada de geocodificação. A consulta usa os códigos municipais nas áreas OSM, em vez de pesquisar relações por nome dentro do estado. Cidades desconhecidas são rejeitadas imediatamente; o Distrito Federal usa sua área administrativa estadual. Áreas ausentes no OSM ainda podem produzir resultado vazio.
+- Cada servidor tem prazo total de sete segundos, incluindo leitura da resposta. São no máximo duas tentativas; o navegador encerra a consulta em 18 segundos e oferece **Cancelar busca**. Servidores com falha ficam em pausa temporária, e a última fonte saudável recebe preferência. Um timeout com lista vazia é tratado como falha, nunca como pesquisa concluída sem comércios.
+- Em indisponibilidade, uma consulta bem-sucedida anterior pode ser mostrada por até 12 horas, com aviso e data original. Sem uma consulta salva, o erro é exibido e os registros existentes são preservados.
 - Até 100 objetos da fonte, 50 resultados exibidos por consulta; palavra-chave/bairro filtram essa amostra. Não representa todos os comércios da região e não oferece paginação externa.
 - A falta de website no cadastro não comprova ausência de site. Telefones não viram WhatsApp automaticamente. Falhas externas nunca são substituídas por comércios inventados.
 - Atribuição **© OpenStreetMap contributors**, licença ODbL e fontes são preservadas nas exportações. Consulte [fontes e permissões](docs/FONTES.md).

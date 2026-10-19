@@ -6,9 +6,10 @@ import {demoBusinesses} from './lib/demo.js';
 import {readLocal,persist,persistBatch,remove,persistSettings,writeLocal} from './lib/store.js';
 import {configureSupabase,authSession,ensureSession,login,register,logout,clearSession,loadCloud} from './lib/supabase.js';
 import {esc,icon,date,badge,labels,card,safeLink,fieldDisplay} from './lib/ui.js';
+import {searchBusinesses} from './lib/search.js';
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const local=readLocal();let businesses=local.businesses,settings=local.settings,demo=null,view='grid',page=1,nav='search',tab='summary',current=null,stagedImport=[],busy=false;
-let config={search:'not_configured',audit:'not_configured',access:'not_configured'},accessKey='',toastTimer;
+let config={search:'not_configured',audit:'not_configured',access:'not_configured'},accessKey='',toastTimer,searchController=null;
 const detail=$('#detail-dialog'),formDialog=$('#form-dialog');
 const list=()=>demo||businesses;
 const business=id=>list().find(b=>b.id===id);
@@ -153,6 +154,7 @@ document.addEventListener('click',async e=>{
   if(target.dataset.nav){navigate(target.dataset.nav);return;}
   const action=target.dataset.action,b=target.dataset.id?business(target.dataset.id):current?business(current):null;
   try{
+    if(action==='cancel-search'){searchController?.abort();return;}
     if(action==='menu'){const isOpen=$('#sidebar').classList.toggle('open');$('#menu-toggle').setAttribute('aria-expanded',isOpen);}
     if(action==='toggle-demo'){demo=demo?null:demoBusinesses();page=1;if(detail.open)detail.close();render();}
     if(action==='new')businessForm();if(action==='edit'&&b)businessForm(b);
@@ -207,11 +209,12 @@ $('#search-form').addEventListener('submit',async e=>{
   if(demo){$('#local-query').value=$('#external-query').value;page=1;render();toast('Busca local nos cenários fictícios. Nenhuma consulta externa realizada.');return;}
   if(config.search!=='available'){toast('Fonte de busca não configurada. Use cadastro/importação ou configure a integração no servidor.');return;}
   const f=Object.fromEntries(new FormData(e.target));f.segments=filterValues().segments;
-  busy=true;$('#search-button').disabled=true;$('#results').innerHTML=`<div class="loading-state">${icon('radar')}<p>Consultando a fonte externa…</p><p>Uma consulta limitada, sem progresso percentual estimado.</p></div>`;
-  try{const data=await api('search',f);const incoming=[];let duplicate=0;for(const b of data.businesses){if(duplicateCandidates([...businesses,...incoming],b).length){duplicate++;continue;}if(canRetain(b))incoming.push(b);}
+  busy=true;searchController=new AbortController();$('#search-button').disabled=true;$('#results').innerHTML=`<div class="loading-state">${icon('radar')}<p id="search-progress" role="status">Consultando comércios na região…</p><p>A fonte pode levar alguns segundos. Seus registros continuam salvos.</p><button type="button" class="button secondary" data-action="cancel-search">Cancelar busca</button></div>`;
+  const progress=setTimeout(()=>{const message=$('#search-progress');if(message)message.textContent='A fonte está demorando. Tentando recuperar a consulta…';},7000);
+  try{const data=await searchBusinesses(f,{signal:searchController.signal});if(searchController.signal.aborted)return;const incoming=[];let duplicate=0;for(const b of data.businesses){if(duplicateCandidates([...businesses,...incoming],b).length){duplicate++;continue;}if(canRetain(b))incoming.push(b);}
     if(incoming.length){const merged=[...businesses,...incoming];await persistBatch(incoming,merged,settings);businesses=merged;}
     page=1;$('#source-note').textContent=data.notice;toast(`${incoming.length} registros adicionados; ${duplicate} possíveis duplicatas preservadas sem sobrescrever. ${data.state==='partial'?'Resposta parcial da fonte.':''}`);
-  }catch(error){toast(error.message||'Busca indisponível. Nenhum resultado inventado foi adicionado.');$('#source-note').textContent=error.message;}finally{busy=false;$('#search-button').disabled=false;render();}
+  }catch(error){const message=error.name==='AbortError'?'Busca cancelada. Seus registros foram preservados.':error.message||'Busca indisponível. Seus registros foram preservados.';toast(message);$('#source-note').textContent=message;}finally{clearTimeout(progress);searchController=null;busy=false;$('#search-button').disabled=false;render();}
 });
 $$('.filters input,.filters select,#sort').forEach(e=>e.addEventListener(e.tagName==='INPUT'&&e.type!=='checkbox'?'input':'change',()=>{page=1;render();}));
 detail.addEventListener('close',()=>{if(location.hash.startsWith('#empresa='))history.replaceState(null,'',location.pathname+location.search);});

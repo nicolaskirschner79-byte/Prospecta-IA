@@ -19,9 +19,12 @@ test('instalação funciona sem .env e mantém credenciais de outro projeto sepa
 
 test('cidade aceita acentos, variações de caixa e Distrito Federal com consulta delimitada',()=>{
   const normal=buildQuery({city:'São Paulo',uf:'sp'}),plain=buildQuery({city:'sao paulo',uf:'SP'});
-  assert.equal(normal,plain);assert.ok(normal.includes('[aáàâãä]'));
-  const df=buildQuery({city:'Brasília',uf:'DF'});assert.ok(df.includes('.state->.city;'));assert.ok(!df.includes('"admin_level"="8"'));
-  assert.ok(buildQuery({city:'A.*[x]',uf:'SP'}).includes('\\\\.\\\\*\\\\['));
+  assert.equal(normal,plain);assert.ok(normal.includes('ref:IBGE'));
+  const df=buildQuery({city:'Brasília',uf:'DF'});assert.ok(df.includes('BR-DF'));assert.ok(!df.includes('"admin_level"="8"'));
+  assert.throws(()=>buildQuery({city:'A.*[x]',uf:'SP'}),/Cidade não localizada/);
+  assert.ok(normal.includes('3550308'));assert.ok(!normal.includes('map_to_area'));
+  assert.ok(buildQuery({city:'Itapeva',uf:'SP'}).includes('3522406'));
+  assert.ok(buildQuery({city:'Itapeva',uf:'MG'}).includes('3133600'));
 });
 
 test('falha transitória troca de fonte uma vez; cache agrega chamadas concorrentes',async()=>{

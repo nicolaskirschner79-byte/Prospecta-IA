@@ -37,3 +37,9 @@ Confirmação do vínculo na ficha + confirmação de autorização na ação au
 ## Fora da integração
 
 Google Maps/Places, Instagram e Facebook não são raspados. Não há leitura de páginas autenticadas, bypass de bloqueios ou banco exportável de leads derivado do Google Places. Links de canais fornecidos pelo usuário podem ser exibidos sem que o app alegue acesso ao conteúdo. IA generativa externa não está integrada; o produto entrega o fallback por template solicitado no escopo.
+
+## Índice municipal para acelerar a consulta
+
+A [API oficial de Localidades do IBGE](https://servicodados.ibge.gov.br/api/docs/localidades) forneceu os 5.571 nomes/identificadores municipais em 19/10/2026. O snapshot reduzido fica em `server/data/municipalities.js`, somente no servidor; não adiciona uma chamada externa nem peso ao frontend em cada busca. Não contém cadastros de empresas.
+
+O código oficial delimita a área OSM por `IBGE:GEOCODIGO` ou `ref:IBGE`. A relação OSM [Itapeva/SP, 298034](https://www.openstreetmap.org/relation/298034) foi inspecionada pela API oficial: `admin_level=8`, `IBGE:GEOCODIGO=3522406`. O Distrito Federal usa a área `BR-DF`. A ausência de área ou de comércios na amostra não comprova ausência de negócios reais.

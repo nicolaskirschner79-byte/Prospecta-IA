@@ -32,7 +32,7 @@ test('fluxo DOM/HTTP: busca sem cadastro, salva no navegador e preserva resultad
   const memory=new Map(),tabMemory=new Map();
   globalThis.localStorage={getItem:k=>memory.get(k)||null,setItem:(k,v)=>memory.set(k,v),removeItem:k=>memory.delete(k)};
   globalThis.sessionStorage={getItem:k=>tabMemory.get(k)||null,setItem:(k,v)=>tabMemory.set(k,v),removeItem:k=>tabMemory.delete(k)};
-  let sourceCalls=0;
+  let sourceCalls=0,stalled=false;
   const setup=async()=>{
     const {window,document}=parseHTML(await readFile(new URL('../public/index.html',import.meta.url),'utf8'));
     for(const d of document.querySelectorAll('dialog')){d.showModal=()=>{d.open=true;};d.close=()=>{d.open=false;d.dispatchEvent(new window.Event('close'));};}
@@ -46,9 +46,10 @@ test('fluxo DOM/HTTP: busca sem cadastro, salva no navegador e preserva resultad
   globalThis.fetch=async(url,options={})=>{
     const value=String(url);
     if(value==='/api/config')return Response.json(publicConfig({}));
-    if(value==='/api/search'){
+    if(value.startsWith('/api/search?')){
+      if(stalled)return new Promise(()=>{});
       const response={statusCode:200,setHeader(){},end(body){this.body=JSON.parse(body);}};
-      await handleAPI({url:value,method:options.method,headers:Object.fromEntries(Object.entries(options.headers).map(([key,value])=>[key.toLowerCase(),value])),body:JSON.parse(options.body)},response,{});
+      await handleAPI({url:value,method:options.method,headers:Object.fromEntries(Object.entries(options.headers||{}).map(([key,value])=>[key.toLowerCase(),value])),body:options.body?JSON.parse(options.body):undefined},response,{});
       return Response.json(response.body,{status:response.statusCode});
     }
     if(value.includes('/api/interpreter')){sourceCalls++;return Response.json({elements:[{id:42,type:'node',tags:{name:'Café do fluxo de teste',amenity:'cafe','addr:city':'Itapeva'}}]});}
@@ -63,4 +64,12 @@ test('fluxo DOM/HTTP: busca sem cadastro, salva no navegador e preserva resultad
   assert.equal(document.querySelector('#account-name').textContent,'Espaço local');
   assert.match(document.querySelector('#results').textContent,/Café do fluxo de teste/);
   assert.equal(memory.size,1,'recarregar preserva a base local');assert.equal(sourceCalls,1,'recarregar não repete a consulta externa');
+  document.querySelector('#external-query').value='lento';stalled=true;
+  document.querySelector('#search-form').dispatchEvent(new window.Event('submit',{bubbles:true,cancelable:true}));
+  assert.ok(document.querySelector('[data-action="cancel-search"]'));
+  document.querySelector('[data-action="cancel-search"]').dispatchEvent(new window.Event('click',{bubbles:true}));
+  for(let i=0;i<20&&document.querySelector('#search-button').disabled;i++)await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(document.querySelector('#search-button').disabled,false);assert.match(document.querySelector('#source-note').textContent,/cancelada/);
+  assert.match(document.querySelector('#results').textContent,/Café do fluxo de teste/);
+
 });

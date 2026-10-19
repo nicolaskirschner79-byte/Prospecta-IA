@@ -1,12 +1,13 @@
 # Contratos do MVP
 
-Respostas JSON, UTF-8, `Cache-Control: no-store`. Backend local e serverless compartilham `handleAPI`. Sem CORS público. Na aplicação use mesma origem.
+Respostas JSON, UTF-8. Erros, POST e operações autenticadas usam `Cache-Control: no-store`. GET de busca bem-sucedido pode ser armazenado pela CDN do Vercel, sem dados de conta. Backend local e serverless compartilham `handleAPI`. Sem CORS público. Na aplicação use mesma origem.
 
 ## HTTP
 
 | Operação | Contrato |
 |---|---|
 | `GET /api/config` | público; `{search, searchAccess:'public', audit, ai:'template', access, supabase:{url,key}|null}`. Somente URL/chave **publicável** Supabase; nunca acesso privado/PageSpeed/segredos |
+| `GET /api/search` | público; parâmetros `city`, `uf`, `query`, `district`, `segments` (IDs separados por vírgula). Mesmo resultado da busca POST. Cache CDN por até 600 s, com revalidação em segundo plano e data original preservada |
 | `POST /api/search` | público, sem autenticação; `{city:string,uf:string,query?:string,district?:string,segments?:string[]}`; resposta `{state,businesses:Business[],nextCursor:null,partial:true,notice,attribution,licenseURL}` |
 | `POST /api/details` | público, sem autenticação; `{id:'osm-node-123'}` (ou way/relation); `{business:Business,state}`. Interface revisa diferenças em vez de sobrescrever |
 | `POST /api/audit` | `{url:'https://dominio-autorizado',authorized:true}`; `{id,at,expiresAt,url,tests,performance,permissions,limits,state:'partial'}` |
@@ -45,6 +46,8 @@ CSV de entrada: cabeçalho `name` obrigatório; demais campos do modelo são opc
 
 Auditoria: `authorized:true` continua obrigatório. Sem uma allowlist personalizada, somente o domínio informado e sua variante www são autorizados nessa operação, preservando a validação HTTPS/DNS/IP. `AUDIT_MODE=disabled` desativa a função.
 
-Sessão: tokens são mantidos em sessionStorage por projeto para restaurar a mesma aba; renovação concorrente é agregada. Busca salva registros em uma única requisição REST de upsert. Cache do provedor: cinco minutos, 12 entradas por instância, com horário original da coleta e duas tentativas no máximo em falhas transitórias.
+Sessão: tokens são mantidos em sessionStorage por projeto para restaurar a mesma aba; renovação concorrente é agregada. Busca salva registros em uma única requisição REST de upsert. Cache do provedor: dez minutos, 12 entradas por instância, com horário original da coleta e no máximo duas tentativas de sete segundos em falhas transitórias. Cache antigo de até 12 h só é retornado com `cache:stale`, `state:partial` e aviso. `remark` de timeout sem elementos dispara recuperação, em vez de ser convertido em zero resultados. O servidor saudável passa a receber prioridade e os indisponíveis entram em pausa de 60 s (30 s para 429).
 
 Busca e detalhes não consultam Auth nem reservam quota por conta; uma sessão expirada ou o banco indisponível não bloqueiam essas rotas. O limite público é de 30 operações/hora/IP/instância, com intervalo de três segundos. Cabeçalhos de IP enviados pelo visitante são ignorados fora da Vercel. Visitantes salvam resultados no armazenamento local; sincronização em conta é opcional. As políticas RLS do banco permanecem inalteradas.
+
+O frontend usa GET canônico, cache de até oito pesquisas e cancelamento por AbortController, com prazo de 18 s independente do transporte. Respostas de erro e respostas canceladas não entram no cache. A resposta bem-sucedida inclui `collectedAt` e `cache` (`miss`, `fresh` ou `stale`); cabeçalhos de cache da CDN não são habilitados para erros, auditorias, preferências ou notas.

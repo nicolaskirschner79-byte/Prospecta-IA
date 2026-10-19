@@ -18,10 +18,11 @@ export async function handleAPI(req,res,input=process.env){
   const env=resolveConfig(input);
   res.setHeader('Content-Type','application/json; charset=utf-8');res.setHeader('Cache-Control','no-store');
   try{
-    const route=new URL(req.url,'http://localhost').pathname.split('/').at(-1);
+    const requestURL=new URL(req.url,'http://localhost'),route=requestURL.pathname.split('/').at(-1);
     if(route==='config'&&req.method==='GET'){res.end(JSON.stringify(publicConfig(env)));return;}
     if(!['search','details','audit'].includes(route))throw new AppError(404,'NOT_FOUND','Rota não encontrada.');
-    if(req.method!=='POST')throw new AppError(405,'METHOD','Método não permitido.');
+    const cacheableSearch=route==='search'&&req.method==='GET';
+    if(req.method!=='POST'&&!cacheableSearch)throw new AppError(405,'METHOD','Método não permitido.');
     const publicSearch=route==='search'||route==='details';
     const user=publicSearch?guestRateKey(req,env):await authenticate(req,env);rateLimit(user);
     if(!publicSearch&&user!=='single-user'){
@@ -29,7 +30,7 @@ export async function handleAPI(req,res,input=process.env){
       if(!quota.ok)throw new AppError(503,'QUOTA_UNAVAILABLE','Não foi possível reservar a quota no banco. Verifique a instalação do schema.');
       if(await limitedJSON(quota,1000)!==true)throw new AppError(429,'LIMIT','Limite por conta atingido. Aguarde antes de tentar novamente.');
     }
-    let body=req.body;
+    let body=cacheableSearch?{city:requestURL.searchParams.get('city')||'',uf:requestURL.searchParams.get('uf')||'',query:requestURL.searchParams.get('query')||'',district:requestURL.searchParams.get('district')||'',segments:(requestURL.searchParams.get('segments')||'').split(',').filter(Boolean)}:req.body;
     if(typeof body==='string'){if(Buffer.byteLength(body)>16000)throw new AppError(413,'SIZE','Requisição muito grande.');try{body=JSON.parse(body);}catch{throw new AppError(400,'INPUT','JSON inválido.');}}
     if(!body){let s='';for await(const c of req){s+=c;if(Buffer.byteLength(s)>16000)throw new AppError(413,'SIZE','Requisição muito grande.');}try{body=JSON.parse(s);}catch{throw new AppError(400,'INPUT','JSON inválido.');}}
     if(!body||typeof body!=='object'||Array.isArray(body))throw new AppError(400,'INPUT','Objeto JSON esperado.');
@@ -47,6 +48,14 @@ export async function handleAPI(req,res,input=process.env){
       if(typeof body.url!=='string'||body.url.length>2000||body.authorized!==true)throw new AppError(400,'INPUT','Confirme autorização para analisar o domínio.');
       result=await bounded(()=>auditWebsite(body.url,env));
     }else throw new AppError(404,'NOT_FOUND','Rota não encontrada.');
+    // Somente dados públicos da fonte, sem preferências ou notas da conta.
+    // GET permite cache compartilhado entre instâncias; erros e auditorias
+    // continuam no-store. Respostas antigas não reiniciam o prazo de frescor.
+    if(cacheableSearch&&result.cache!=='stale'){
+      const age=Math.max(0,Math.floor((Date.now()-Date.parse(result.collectedAt))/1000));
+      res.setHeader('Cache-Control','public, max-age=0, must-revalidate');
+      res.setHeader('Vercel-CDN-Cache-Control',`max-age=${Math.max(1,600-age)}, stale-while-revalidate=${Math.max(0,43200-age)}`);
+    }
     res.end(JSON.stringify(result));
   }catch(e){const expected=e instanceof AppError;res.statusCode=expected?e.status:e.name==='TimeoutError'?504:502;res.end(JSON.stringify({state:expected?e.code==='LIMIT'?'limit':e.code==='INVALID_CREDENTIAL'?'invalid_credential':e.code==='NOT_CONFIGURED'?'not_configured':'unavailable':'unavailable',code:expected?e.code:'UPSTREAM_ERROR',message:expected?e.message:'Não foi possível concluir a consulta externa. Nenhum resultado foi fabricado.'}));}
 }
