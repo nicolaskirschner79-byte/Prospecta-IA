@@ -1,6 +1,6 @@
 import { DEFAULT_SETTINGS } from './domain.js';
 import { canRetain, projectBusiness } from './permissions.js';
-import { authSession,saveCloud,deleteCloud,saveCloudSettings } from './supabase.js';
+import { authSession,saveCloud,saveCloudBatch,deleteCloud,saveCloudSettings } from './supabase.js';
 const KEY='prospecta.local.v1';
 export function readLocal(){
   try {const x=JSON.parse(localStorage.getItem(KEY)||'{}');return {businesses:Array.isArray(x.businesses)?x.businesses.filter(canRetain):[],settings:{...structuredClone(DEFAULT_SETTINGS),...x.settings}};}
@@ -15,6 +15,10 @@ export async function persist(b,businesses,settings){
   if(b.demo)return;
   if(!canRetain(b))throw new Error('Este registro não possui permissão vigente de retenção.');
   if(authSession())await saveCloud(projectBusiness(b,'retain'));else writeLocal(businesses,settings);
+}
+export async function persistBatch(added,businesses,settings){
+  if(added.some(b=>b.demo||!canRetain(b)))throw new Error('Lote contém registro sem permissão de retenção.');
+  if(authSession())await saveCloudBatch(added.map(b=>projectBusiness(b,'retain')));else writeLocal(businesses,settings);
 }
 export async function remove(b,businesses,settings){if(b.demo)return;if(authSession())await deleteCloud(b.id);else writeLocal(businesses,settings);}
 export async function persistSettings(settings,businesses){if(authSession())await saveCloudSettings(settings);else writeLocal(businesses,settings);}

@@ -1,8 +1,16 @@
-import { safeGet, AppError,limitedJSON } from './security.js';
+import { safeGet, AppError,limitedJSON,validateAuditURL } from './security.js';
+export function authorizedAuditHosts(url,env){
+  const configured=(env.AUDIT_ALLOWED_HOSTS||'').split(',').map(x=>x.trim().toLowerCase()).filter(Boolean);
+  if(configured.length){validateAuditURL(url,configured);return configured;}
+  let host;try{host=new URL(url).hostname;}catch{throw new AppError(400,'INVALID_URL','URL inválida.');}
+  // A autorização é confirmada na ficha antes da chamada autenticada. A lista
+  // vale apenas para esta análise; DNS público é conferido em cada conexão.
+  const base=host.replace(/^www\./,'');
+  const hosts=[base,'www.'+base];validateAuditURL(url,hosts);return hosts;
+}
 const stripped=html=>html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'').replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi,'');
 async function runAudit(url,env,{getter=safeGet,fetcher=fetch,signal}={}){
-  const allowedHosts=(env.AUDIT_ALLOWED_HOSTS||'').split(',').map(x=>x.trim().toLowerCase()).filter(Boolean);
-  if(!allowedHosts.length)throw new AppError(503,'NOT_CONFIGURED','Auditoria não configurada: registre os domínios autorizados no servidor.');
+  const allowedHosts=authorizedAuditHosts(url,env);
   const robotsURL=new URL('/robots.txt',url).href;
   const robots=await getter(robotsURL,{allowedHosts,signal});
   // Conservador: qualquer Disallow não vazio interrompe a auditoria leve; revisão humana necessária.

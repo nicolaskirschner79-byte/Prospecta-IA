@@ -11,7 +11,7 @@ Respostas JSON, UTF-8, `Cache-Control: no-store`. Backend local e serverless com
 | `POST /api/details` | `{id:'osm-node-123'}` (ou way/relation); `{business:Business,state}`. Interface revisa diferenças em vez de sobrescrever |
 | `POST /api/audit` | `{url:'https://dominio-autorizado',authorized:true}`; `{id,at,expiresAt,url,tests,performance,permissions,limits,state:'partial'}` |
 
-Operações POST exigem `Authorization: Bearer <token Supabase>` validado em `/auth/v1/user`, ou `x-access-key` para modo individual configurado. Segredos nunca aparecem na configuração pública. Com conta, `consume_api_quota()` reserva uso de forma atômica no Postgres. Operações custosas têm limite de concorrência por instância. Pedidos inválidos também podem consumir quota, por segurança.
+A instalação resolve automaticamente URL/chave publicável do projeto Prospecta IA e identificação da fonte em `server/config.js`; variáveis de ambiente são substituições opcionais. Operações POST exigem `Authorization: Bearer <token Supabase>` validado em `/auth/v1/user`, ou `x-access-key` para modo individual configurado. Segredos nunca aparecem na configuração pública. Com conta, `consume_api_quota()` reserva uso de forma atômica no Postgres. Operações custosas têm limite de concorrência por instância. Pedidos inválidos também podem consumir quota, por segurança.
 
 Erros: `{state,code,message}`. Status: 400 entrada/URL; 401 sessão; 403 domínio sem autorização; 404 recurso; 405 método; 413 tamanho; 422 análise inconclusiva; 429 limite/concorrência; 502 fonte/resposta; 503 fonte/acesso/quota não configurados ou indisponíveis; 504 timeout. Estados públicos: `not_configured`, `available`, `invalid_credential`, `limit`, `unavailable`, `partial`. Mensagens externas cruas/chaves não são devolvidas.
 
@@ -42,3 +42,7 @@ A operação de retenção ocorre antes de gravar. Sem permissão para o nome, n
 Auth: `/auth/v1/signup`, `/auth/v1/token?grant_type=password`, `/auth/v1/token?grant_type=refresh_token`, `/auth/v1/logout`. Data API: `profiles`, `businesses`; `apikey` publicável e JWT do usuário. RLS filtra `auth.uid()=user_id` em cada operação; a chave não é autorização para acessar outra conta. Cliente nunca define permissões pela `user_metadata`.
 
 CSV de entrada: cabeçalho `name` obrigatório; demais campos do modelo são opcionais. UTF-8, 1 MB, 200 linhas, aspas escapadas e quebras internas suportadas. Prévia e confirmação antes de gravar; possíveis duplicatas são separadas para revisão, sem fusão automática. CSV de saída usa aspas, BOM e proteção contra fórmulas; é uma exportação filtrada, não um backup completo do CRM.
+
+Auditoria: `authorized:true` continua obrigatório. Sem uma allowlist personalizada, somente o domínio informado e sua variante www são autorizados nessa operação, preservando a validação HTTPS/DNS/IP. `AUDIT_MODE=disabled` desativa a função.
+
+Sessão: tokens são mantidos em sessionStorage por projeto para restaurar a mesma aba; renovação concorrente é agregada. Busca salva registros em uma única requisição REST de upsert. Cache do provedor: cinco minutos, 12 entradas por instância, com horário original da coleta e duas tentativas no máximo em falhas transitórias.

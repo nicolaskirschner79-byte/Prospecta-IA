@@ -6,7 +6,7 @@ Documentação consultada em 19/10/2026. Esta implementação não assume que �
 
 - [Copyright/licença](https://www.openstreetmap.org/copyright): ODbL; atribuição e compartilhamento aplicável à base derivada. O app mostra atribuição e inclui licença/fontes nas exportações.
 - [Overpass API e instâncias públicas](https://wiki.openstreetmap.org/wiki/Overpass_API): serviço de consulta de dados OSM, limites de infraestrutura e disponibilidade variáveis.
-- [Overpass QL](https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL): áreas, filtros por tags, limites de saída e timeout. Endpoint fixo, sem permitir URL arbitrária de fornecedor pelo cliente.
+- [Overpass QL](https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL): áreas, filtros por tags, limites de saída e timeout. Dois endpoints fixos e documentados, sem permitir URL arbitrária de fornecedor pelo cliente. Servidor alternativo: https://overpass.private.coffee/api/interpreter; retentativa somente para falhas transitórias, nunca para contornar HTTP 429.
 
 Campos usados: nome, tags de atividade/segmento, endereço publicado, telefone, e-mail, site, canal social, horários. Cidade/UF da área de pesquisa, sem tag correspondente, são marcadas como inferência. Não são coletados proprietários, contatos privados, faturamento, CNPJ inferido, avaliações ou fotos sem licença.
 
@@ -20,7 +20,7 @@ O usuário declara direitos de retenção, exportação e IA separadamente e inf
 
 ## Auditoria de sites autorizados
 
-Domínio permitido no ambiente + confirmação do vínculo na ficha + confirmação de autorização na ação. As evidências retornadas são análises limitadas, não cópias indiscriminadas de páginas. Uma página e robots, com limite de bytes/tempo; sem screenshots, varredura de avaliações ou login. Qualquer Disallow não vazio requer revisão para esta versão. Revalidar permissões quando usar um fornecedor diferente.
+Confirmação do vínculo na ficha + confirmação de autorização na ação autenticada. A lista de hosts é limitada à URL dessa operação e à variante www; uma lista mais restritiva no ambiente, quando fornecida, prevalece. As evidências retornadas são análises limitadas, não cópias indiscriminadas de páginas. Uma página e robots, com limite de bytes/tempo; sem screenshots, varredura de avaliações ou login. Qualquer Disallow não vazio requer revisão para esta versão. Revalidar permissões quando usar um fornecedor diferente.
 
 ## PageSpeed
 

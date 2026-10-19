@@ -1,111 +1,77 @@
 # Prospecta IA
 
-Aplicação em português para organizar a prospecção de criação de sites: **cadastro/importação ou busca configurada → ficha → evidências → índice explicável → briefing → contato revisado → negociação**.
+Prospecção de comércios para criação de sites: busca → ficha com fontes → avaliação da oportunidade → briefing → contato revisado → negociação.
 
-O gerador desta versão usa **template estruturado**, sem chamadas a IA generativa e sem chave OpenAI. O nome do produto não implica execução de um modelo. Não há disparos automáticos, pagamentos ou integração com Google Maps/Places.
+## Pronto para esta instalação
 
-## Executar
+O projeto **Prospecta IA** no Supabase já está conectado pelo código. As tabelas, políticas de isolamento entre contas e função de quota foram instaladas e verificadas no banco. A busca OpenStreetMap já vem ativada e identificada com o endereço deste repositório. **Não é necessário criar `.env.local`, copiar chaves ou executar SQL para usar esta instalação.**
 
-Requer Node.js **22.6 ou superior** (testado com 24.19). O servidor e o frontend não precisam de bibliotecas externas em produção.
+1. Abra o site e clique em **Buscar comércios** ou na conta do menu.
+2. Crie sua conta, confirme o e-mail se solicitado e entre. Isso protege seus registros; não é configuração técnica. Após confirmar, volte ao site e faça login.
+3. Informe cidade/UF e, se desejar, segmento, palavra-chave e bairro. A busca pendente continua após entrar. Os novos resultados são salvos na sua conta automaticamente, em um único lote.
+4. Abra a ficha, confirme a identidade e registre as evidências. A pontuação depende do que foi verificado, sem inventar probabilidade de compra.
+5. Gere o briefing completo em **Prompt do site**. Contatos e mensagens exigem revisão; WhatsApp só é ativado para um número confirmado com país e DDD.
+
+O gerador funciona por **template local de 14 seções**, sem API paga ou configuração de IA. Ele não executa um modelo generativo. O conteúdo pode ser copiado ou baixado para outra ferramenta, conforme as permissões da fonte.
+
+Cadastro/importação/briefings também funcionam no espaço local sem login. Dados locais ficam neste navegador; dados da conta ficam no Supabase com RLS por usuário. Essas bases não são misturadas automaticamente. A demonstração é fictícia e separada, somente em memória.
+
+## Executar no computador
+
+Com **Node.js 24 LTS** instalado:
 
 ```bash
-npm ci
 npm start
 ```
 
-Abra `http://localhost:3000`. `npm ci` instala somente as ferramentas de teste do projeto; o runtime usa APIs nativas do Node. Não abra `index.html` via `file://`: módulos precisam de HTTP.
+Abra `http://localhost:3000`. No Windows, também pode abrir `iniciar.bat`. O runtime usa APIs nativas do Node, sem instalar pacotes nem configurar banco. Não abra `index.html` diretamente por `file://`.
+
+Para desenvolver/verificar:
 
 ```bash
-npm run check
-npm test
+npm ci
+npm run build
 ```
 
-## Primeiro uso, sem integrações
+`npm run build` verifica sintaxe/ativos e executa todos os testes. As dependências de desenvolvimento são usadas apenas nos testes.
 
-1. Em **Configurações**, preencha nome do vendedor/agência e portfólio, se desejar. Nenhuma marca é inventada.
-2. **Cadastre um comércio** com dados autorizados ou **importe CSV** usando o modelo vazio disponível no painel. Marque apenas as permissões que a origem permite.
-3. Abra a ficha e registre a identidade e as evidências de cada critério. Justificativas são obrigatórias. A ausência de website em um cadastro é inconclusiva.
-4. Veja a pontuação e as verificações pendentes em **Oportunidade**.
-5. Em **Prompt do site**, edite objetivo/estilo/funcionalidades e gere o briefing com 14 seções. A versão **Para IA** exige permissões de exportação e de envio a IA para os dados utilizados. A versão **Uso interno** não deve ser enviada a uma IA quando contiver dados restritos.
-6. Revise a mensagem em **Contato e negociação**. WhatsApp só fica disponível com confirmação explícita, país e DDD. O clique não registra contato/venda; atualize a etapa manualmente.
+## Busca e disponibilidade
 
-O espaço local usa armazenamento deste navegador, em dispositivo compartilhado com quem usa esse mesmo perfil. Não é uma conta autenticada. Fechar/reabrir preserva os registros locais autorizados, favoritos, notas e prompts. A demonstração é separada e fica somente em memória; todos os negócios são fictícios e os contatos ficam desativados.
+- Fonte: OpenStreetMap, consultado pelo Overpass. Servidor principal `https://overpass-api.de/api/interpreter`; alternativa `https://overpass.private.coffee/api/interpreter` somente em falha transitória. Um HTTP 429 é respeitado, sem trocar de servidor para contornar a quota.
+- Cache de cinco minutos por instância, com limite de 12 consultas e agregação de chamadas simultâneas iguais. Cache preserva o horário da consulta original.
+- Cidade aceita diferenças de maiúsculas/acentos; Distrito Federal usa a área administrativa estadual. Nomes alternativos e áreas ausentes ainda podem produzir resultado vazio.
+- Até 100 objetos da fonte, 50 resultados exibidos por consulta; palavra-chave/bairro filtram essa amostra. Não representa todos os comércios da região e não oferece paginação externa.
+- A falta de website no cadastro não comprova ausência de site. Telefones não viram WhatsApp automaticamente. Falhas externas nunca são substituídas por comércios inventados.
+- Atribuição **© OpenStreetMap contributors**, licença ODbL e fontes são preservadas nas exportações. Consulte [fontes e permissões](docs/FONTES.md).
 
-## Configurar as integrações
+## Conta e sincronização
 
-Copie `.env.example` para `.env.local` **somente na sua máquina**. O arquivo real é ignorado pelo Git. Use o painel de variáveis de ambiente do provedor de hospedagem para produção. Não envie senhas/chaves pelo chat nem coloque segredos no repositório.
+A sessão é renovada automaticamente e preservada em `sessionStorage` ao recarregar a mesma aba. Sair da conta limpa a sessão local mesmo se o serviço estiver indisponível. O aplicativo não guarda tokens em `localStorage`. Fechar a sessão da aba pode exigir novo login.
 
-### OpenStreetMap / Overpass (opcional)
+`profiles` guarda preferências, `businesses` guarda cada ficha/histórico atomicamente em JSONB e `api_usage` controla quotas. Registros de outra conta não podem ser lidos ou alterados. A chave `sb_publishable_...` do código é pública por definição; acesso a registros depende do JWT do usuário e das políticas RLS, nunca dessa chave isolada. Não há chave secreta ou `service_role` no projeto.
 
-```dotenv
-ENABLE_OSM=true
-PROVIDER_CONTACT=https://github.com/SEU_USUARIO/SEU_REPOSITORIO
-APP_ACCESS_KEY=DEFINA_UM_CODIGO_PRIVADO_LONGO_NO_SEU_AMBIENTE
-```
+Limites: 500 KB por ficha, 1.000 registros carregados por conta, 30 consultas externas/hora/conta e três segundos entre chamadas. Colaboração simultânea na mesma ficha usa a última gravação; resolução de conflitos entre abas está fora desta versão.
 
-Depois de reiniciar o servidor, abra Configurações e informe o código de acesso **nesta sessão**. Ele só fica na memória da página. Em instalações com Supabase Auth configurado, prefira entrar na conta; a aplicação valida o usuário no servidor antes de consultar uma fonte.
+## Auditoria de site
 
-Fonte efetivamente implementada: `https://overpass-api.de/api/interpreter`. A consulta usa uma área administrativa de município dentro da UF brasileira, tags de comércio e uma taxonomia de 15 segmentos. A consulta é exata para o nome do município no OpenStreetMap; nomes alternativos, áreas ausentes e Distrito Federal podem retornar vazio. Não há alegação de cobertura universal de empresas.
+Na ficha, confirme identidade/vínculo do site e a autorização para analisá-lo. O servidor autoriza o domínio e sua variante `www` apenas para essa operação; não é preciso editar variáveis por comércio. Redirecionamento para outro domínio exige revisão.
 
-Há um limite de 100 objetos retornados na consulta e 50 resultados após filtros. Palavra-chave/bairro filtram essa amostra; uma resposta vazia **não** comprova ausência de comércios ou de sites. A API não fornece cursor de paginação nesta implementação. A paginação de oito cards é **local**. Não há filtro de raio fictício.
+A auditoria lê uma página e `robots.txt`, com limites de tempo/bytes. DNS é validado antes de cada conexão e fixado no acesso; IPs privados, localhost, metadados, portas e esquemas inseguros são bloqueados. Restrições em robots e bloqueios da página produzem resultado inconclusivo.
 
-Dados colaborativos podem estar incompletos ou desatualizados. Não se presume identidade, domínio próprio, atividade atual ou WhatsApp. Resultados do fornecedor não sobrescrevem correções do usuário; divergências ficam registradas como conflitos.
+Não há inspeção visual, execução de JavaScript ou teste real de formulários. Lighthouse/PageSpeed é uma medição **opcional** que só ocorre com `PAGESPEED_API_KEY`; sem ela, a auditoria básica continua funcional e desempenho aparece como não medido.
 
-Obrigatório manter **© OpenStreetMap contributors**, o link da licença e cumprir a ODbL. Os dados da fonte são tratados como um banco derivado sujeito às obrigações aplicáveis de atribuição e compartilhamento; não os relicencie como uma base proprietária irrestrita. CSV e briefings mantêm fontes/licença. Para distribuição ou uso comercial em escala, revise as obrigações da base concreta e hospede/contrate infraestrutura apropriada. A disponibilidade da instância pública não é um SLA nem uma promessa de consultas ilimitadas. Veja [fontes e permissões](docs/FONTES.md).
+## Publicação automática
 
-### Supabase: contas e sincronização (opcional)
+O repositório já possui integração Git com o projeto Vercel `prospecta-ia`. `vercel.json` define instalação, build com testes, saída `public`, região `gru1` e limite de 60 segundos para a API. Novos commits na branch de produção são enviados pela integração existente; o build falha se as verificações falharem.
 
-1. Crie ou selecione um projeto Supabase vazio para esta aplicação.
-2. Execute **uma vez** `supabase/schema.sql` no SQL Editor. O script não é uma migração idempotente para um banco com tabelas de mesmo nome. Examine-o antes de aplicá-lo a um projeto existente.
-3. Configure no servidor `SUPABASE_URL=https://SEU_REF.supabase.co` e `SUPABASE_PUBLISHABLE_KEY` com a **chave publicável**, nunca `service_role`/chave secreta.
-4. Habilite autenticação por e-mail/senha e configure confirmação por e-mail, redirecionamentos e SMTP conforme seu projeto. Abra o aplicativo → conta → criar conta → confirmar e-mail se necessário → entrar.
-5. Em conta, os registros vêm do banco; a base local não é misturada nem enviada automaticamente. Cada conta tem perfil e negócios próprios, com RLS e grants explícitos. Para transportar registros locais, exporte somente os autorizados e importe-os na conta.
-6. Em um banco **de teste**, execute `supabase/tests/rls.sql` para conferir duas identidades e acesso anônimo. A suite `npm test` também executa esse SQL em Postgres PGlite com o contrato `auth.uid()` simulado; isso não substitui a validação no projeto Supabase real.
+Nesta manutenção, o plugin Vercel recusou acesso à conta do projeto com **403**. O código está preparado para a integração existente, mas isso impede administrar a hospedagem ou confirmar sua configuração pelo plugin. Não confunda configuração do código com confirmação de uma publicação no ar; veja [validação](docs/VALIDACAO.md).
 
-Entidades `evidence`, auditorias, snapshots, prompts e eventos ficam dentro do documento `businesses.data`, com atualização atômica por negócio. `profiles` guarda preferências; `api_usage` guarda quotas. Isso evita notas compartilhadas entre contas e não retém respostas brutas indiscriminadamente. Há limite de 500 KB por negócio e 1.000 registros carregados por conta nesta versão. Não edite simultaneamente o mesmo registro em duas abas: a última gravação vence; colaboração concorrente está fora do MVP.
+## Personalização técnica opcional
 
-Tokens Auth ficam em memória, com renovação quando necessário; recarregar exige novo login. O cliente não usa metadata editável para autorizar ações. CSP permite conexões a subdomínios `supabase.co`; se usar domínio personalizado, ajuste conscientemente a política nos dois servidores.
+`.env.example` lista somente substituições opcionais. Para usar outro Supabase, informe **URL e chave publicável juntas**, instale `supabase/schema.sql` em um projeto vazio e configure Auth desse novo projeto. Não execute o schema inicial novamente no banco já instalado.
 
-### Auditoria autorizada e PageSpeed (opcionais)
+`ENABLE_OSM=false` desativa a busca; `AUDIT_MODE=disabled` desativa auditorias; `AUDIT_ALLOWED_HOSTS` restringe os domínios quando desejado. `DISABLE_CLOUD=true` com `APP_ACCESS_KEY` permite instalação individual sem Supabase, com limites por instância. Nunca envie senhas/tokens ao Git.
 
-```dotenv
-AUDIT_ALLOWED_HOSTS=dominio-autorizado.com.br,www.dominio-autorizado.com.br
-PAGESPEED_API_KEY=
-```
+Fontes OSM têm validade de 30 dias; auditorias, sete dias. Retenção local segue preferências. Exclusão remota e revisão de registros vencidos são manuais. Não há disparo automático de mensagens, pagamentos, raspagem de Google Maps ou integração de IA generativa nesta versão.
 
-Confirme a identidade e o vínculo do domínio na ficha antes de executar. Cada host de redirecionamento precisa estar na lista. Somente HTTPS, porta padrão e HTML/texto limitado são aceitos. DNS e IP são validados e fixados na conexão; URLs internas/metadados são bloqueadas. `robots.txt` com qualquer `Disallow` não vazio exige revisão humana (política conservadora). A autorização declarada e a allowlist são requisitos adicionais, não substitutos de licenças/termos da página.
-
-A auditoria lê **uma página e robots.txt**; não executa JavaScript, não faz inspeção visual/mobile real, não testa formulários e não percorre links. Presença de meta viewport é um teste de HTML, não uma certificação de responsividade. Contato não detectado e clareza de CTA ficam desconhecidos, sem penalidade artificial.
-
-PageSpeed só é chamado se houver chave configurada, com estratégia mobile e registro da data. É uma medição de laboratório, sem promessa sobre todos os visitantes. A resposta de erro/limite não é transformada em nota. API e infraestrutura podem ter quotas/custos próprios.
-
-## Implantação preparada para Vercel
-
-O código contém `vercel.json` e `api/[route].js`, sem framework ou build de frontend. Na importação do repositório, use **Other**, saída `public` e build `npm run check`. Configure as variáveis no ambiente do projeto. As funções usam Node e não carregam PGlite/LinkeDOM em produção.
-
-Esta entrega de código não cria um projeto de hospedagem ou uma URL pública automaticamente. A publicação do site é uma ação separada. O adaptador Vercel está preparado, mas não foi testado em uma implantação real.
-
-## Segurança, limites e retenção
-
-- Dados externos passam como texto escapado; não há HTML de fornecedor inserido com confiança, conteúdo executável de páginas ou instruções de terceiros executadas por IA.
-- Campos e avaliações carregam origem, estado, datas, validade e permissões. Exportações removem campos restritos, vencidos/conflitantes. Prompts derivados têm validade limitada pelas fontes utilizadas; reveja edições manuais antes de compartilhar.
-- Consultas externas autenticadas: 30 operações/hora/conta e intervalo de 3 segundos. Com Supabase, reserva transacional em banco por identidade; sem Supabase, código de acesso para um usuário e limite **por instância**. Instalações públicas com múltiplas instâncias devem usar Supabase; o contador em memória sozinho não é uma quota global.
-- Concorrência local limitada a duas operações externas/instância; sem retentativa automática, evitando repetir custo/consulta. Timeout no cliente de 55 s; Overpass de 25 s; auditoria com teto total. Limite de corpo de requisição de 16 KB e de leitura da fonte de 1,5 MB.
-- Fontes OpenStreetMap expiram para uso em 30 dias; auditorias em 7 dias; registros manuais/importados conforme retenção configurável. Em armazenamento local, dados sem atualização no prazo deixam de ser persistidos na próxima gravação. Na conta, exclusão remota é manual nesta versão: revisar periodicamente fontes/validade e excluir registros vencidos. O aplicativo não anuncia uma limpeza agendada inexistente.
-- RLS isola contas; notas comerciais não são incluídas no CSV/briefing padrão. Exclusão do registro remove seu documento e histórico no espaço atual. “Não contatar” suprime abordagens e fica preservado no CRM. Se excluir um registro de supressão, futuras importações não poderão reconhecer essa preferência: preserve-o enquanto necessário para respeitar a solicitação.
-- A sessão pode ser encerrada no aplicativo; não há API para apagar uma conta Auth. Para exclusão integral de conta, encerrar/revogar sessões e seguir o procedimento do administrador Supabase; não considerar apagar `auth.users` isoladamente como revogação de todos os tokens.
-
-## Estrutura
-
-```text
-public/           HTML, CSS, interface e módulos puros
-public/lib/       dados, score, permissões, briefing, contatos, storage/Auth
-server/           servidor local, segurança, auditoria, handler HTTP
-server/providers/ adaptador OpenStreetMap substituível
-api/              entrada serverless
-supabase/         schema, RLS, quota e testes SQL
-tests/            domínio, integrações simuladas, HTTP, DOM e Postgres
-docs/             contratos, rubrica, fontes e validação
-```
-
-Consulte [resultado dos testes e pendências](docs/VALIDACAO.md), [contratos](docs/API.md) e [rubrica](docs/PONTUACAO.md). Os testes não substituem validação visual em navegadores/dispositivos nem integrações autenticadas em produção.
+[Contrato da API](docs/API.md) · [Pontuação](docs/PONTUACAO.md) · [Validação](docs/VALIDACAO.md)
