@@ -1,8 +1,8 @@
-import { AppError,equalSecret,rateLimit,bounded,limitedJSON } from './security.js';
+import { AppError,equalSecret,rateLimit,bounded,limitedJSON,guestRateKey } from './security.js';
 import { OSMProvider } from './providers/osm.js';
 import { auditWebsite } from './audit.js';
 import { resolveConfig } from './config.js';
-export function publicConfig(input={}){const env=resolveConfig(input);return {search:env.ENABLE_OSM==='true'&&env.PROVIDER_CONTACT?'available':'not_configured',audit:env.AUDIT_MODE!=='disabled'?'available':'not_configured',ai:'template',supabase:env.SUPABASE_URL&&env.SUPABASE_PUBLISHABLE_KEY?{url:env.SUPABASE_URL,key:env.SUPABASE_PUBLISHABLE_KEY}:null,access:env.APP_ACCESS_KEY?'access_key':env.SUPABASE_URL&&env.SUPABASE_PUBLISHABLE_KEY?'supabase':'not_configured'};}
+export function publicConfig(input={}){const env=resolveConfig(input);return {search:env.ENABLE_OSM==='true'&&env.PROVIDER_CONTACT?'available':'not_configured',searchAccess:'public',audit:env.AUDIT_MODE!=='disabled'?'available':'not_configured',ai:'template',supabase:env.SUPABASE_URL&&env.SUPABASE_PUBLISHABLE_KEY?{url:env.SUPABASE_URL,key:env.SUPABASE_PUBLISHABLE_KEY}:null,access:env.APP_ACCESS_KEY?'access_key':env.SUPABASE_URL&&env.SUPABASE_PUBLISHABLE_KEY?'supabase':'not_configured'};}
 async function authenticate(req,env){
   if(env.APP_ACCESS_KEY&&equalSecret(req.headers['x-access-key'],env.APP_ACCESS_KEY))return 'single-user';
   const bearer=req.headers.authorization;
@@ -22,8 +22,9 @@ export async function handleAPI(req,res,input=process.env){
     if(route==='config'&&req.method==='GET'){res.end(JSON.stringify(publicConfig(env)));return;}
     if(!['search','details','audit'].includes(route))throw new AppError(404,'NOT_FOUND','Rota não encontrada.');
     if(req.method!=='POST')throw new AppError(405,'METHOD','Método não permitido.');
-    const user=await authenticate(req,env);rateLimit(user);
-    if(user!=='single-user'){
+    const publicSearch=route==='search'||route==='details';
+    const user=publicSearch?guestRateKey(req,env):await authenticate(req,env);rateLimit(user);
+    if(!publicSearch&&user!=='single-user'){
       const quota=await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/consume_api_quota`,{method:'POST',headers:{apikey:env.SUPABASE_PUBLISHABLE_KEY,Authorization:req.headers.authorization,'Content-Type':'application/json'},body:'{}',signal:AbortSignal.timeout(5000)});
       if(!quota.ok)throw new AppError(503,'QUOTA_UNAVAILABLE','Não foi possível reservar a quota no banco. Verifique a instalação do schema.');
       if(await limitedJSON(quota,1000)!==true)throw new AppError(429,'LIMIT','Limite por conta atingido. Aguarde antes de tentar novamente.');

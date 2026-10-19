@@ -28,11 +28,11 @@ test('fluxo DOM: demonstração, filtro, ficha, briefing, versão, favorito e vo
   click('[data-action="toggle-demo"]');assert.equal(document.querySelectorAll('.business-card').length,0);
 });
 
-test('fluxo DOM/HTTP: login retoma busca, consulta fonte, salva lote e restaura conta ao recarregar',async()=>{
+test('fluxo DOM/HTTP: busca sem cadastro, salva no navegador e preserva resultados ao recarregar',async()=>{
   const memory=new Map(),tabMemory=new Map();
   globalThis.localStorage={getItem:k=>memory.get(k)||null,setItem:(k,v)=>memory.set(k,v),removeItem:k=>memory.delete(k)};
   globalThis.sessionStorage={getItem:k=>tabMemory.get(k)||null,setItem:(k,v)=>tabMemory.set(k,v),removeItem:k=>tabMemory.delete(k)};
-  let rows=[],batches=0,sourceCalls=0;
+  let sourceCalls=0;
   const setup=async()=>{
     const {window,document}=parseHTML(await readFile(new URL('../public/index.html',import.meta.url),'utf8'));
     for(const d of document.querySelectorAll('dialog')){d.showModal=()=>{d.open=true;};d.close=()=>{d.open=false;d.dispatchEvent(new window.Event('close'));};}
@@ -51,23 +51,16 @@ test('fluxo DOM/HTTP: login retoma busca, consulta fonte, salva lote e restaura 
       await handleAPI({url:value,method:options.method,headers:Object.fromEntries(Object.entries(options.headers).map(([key,value])=>[key.toLowerCase(),value])),body:JSON.parse(options.body)},response,{});
       return Response.json(response.body,{status:response.statusCode});
     }
-    if(value.includes('grant_type=password'))return Response.json({access_token:'ui-token',refresh_token:'ui-refresh',expires_in:3600,user:{id:'ui-flow-user',email:'ui@example.invalid'}});
-    if(value.endsWith('/auth/v1/user'))return Response.json({id:'ui-flow-user'});
-    if(value.endsWith('/rpc/consume_api_quota'))return Response.json(true);
     if(value.includes('/api/interpreter')){sourceCalls++;return Response.json({elements:[{id:42,type:'node',tags:{name:'Café do fluxo de teste',amenity:'cafe','addr:city':'Itapeva'}}]});}
-    if(value.includes('/rest/v1/businesses')){if(options.method==='POST'){rows=JSON.parse(options.body);batches++;return new Response(null,{status:201});}return Response.json(rows);}
-    if(value.includes('/rest/v1/profiles'))return Response.json([]);
     throw new Error('Chamada inesperada: '+value);
   };
   let {document,submit}=await setup();await import('../public/app.js?automatic-flow');
-  submit(document.querySelector('#search-form'));assert.ok(document.querySelector('#auth-form'));
-  document.querySelector('#auth-form [name="email"]').value='ui@example.invalid';
-  document.querySelector('#auth-form [name="password"]').value='ui-password-test';submit(document.querySelector('#auth-form'));
+  submit(document.querySelector('#search-form'));assert.equal(document.querySelector('#auth-form'),null);
   for(let i=0;i<30&&!document.querySelector('.business-card');i++)await new Promise(resolve=>setImmediate(resolve));
   assert.match(document.querySelector('#results').textContent,/Café do fluxo de teste/);
-  assert.equal(sourceCalls,1);assert.equal(batches,1);assert.equal(rows[0].user_id,'ui-flow-user');assert.equal(tabMemory.size,1);
+  assert.equal(sourceCalls,1);assert.equal(memory.size,1);assert.equal(tabMemory.size,0);
   ({document}=await setup());await import('../public/app.js?automatic-reload');
-  assert.equal(document.querySelector('#account-name').textContent,'ui@example.invalid');
+  assert.equal(document.querySelector('#account-name').textContent,'Espaço local');
   assert.match(document.querySelector('#results').textContent,/Café do fluxo de teste/);
-  assert.equal(batches,1,'recarregar não duplica a gravação');assert.equal(sourceCalls,1,'recarregar não repete a consulta externa');
+  assert.equal(memory.size,1,'recarregar preserva a base local');assert.equal(sourceCalls,1,'recarregar não repete a consulta externa');
 });

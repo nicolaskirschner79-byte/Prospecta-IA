@@ -4,13 +4,13 @@ Manutenção em 19/10/2026. Runtime: Node.js 24.19.0.
 
 ## Código e fluxos automatizados
 
-`npm run build` executa verificação de sintaxe/ativos e a suíte Node. A suíte contém **46 testes**, incluindo:
+`npm run build` executa verificação de sintaxe/ativos e a suíte Node. A suíte contém **48 testes**, incluindo:
 
 - Configuração sem `.env.local`, projeto Supabase conectado, substituições opcionais sem misturar chaves de projetos diferentes e ausência de segredos na resposta pública.
-- API com autenticação real do contrato `/auth/v1/user`, reserva de quota, validação de entrada, normalização da fonte e tratamento de falhas. Nestes testes de contrato, o transporte externo é substituído por fixtures.
+- Busca/detalhes públicos sem chamadas a Auth/REST, inclusive com token inválido; limite por visitante/instância, intervalo entre chamadas e proteção contra cabeçalho de IP forjado fora da Vercel. Auditoria mantém autenticação pelo contrato `/auth/v1/user` e reserva de quota. Nestes testes de contrato, o transporte externo é substituído por fixtures.
 - Busca com variações de caixa/acentos, área do Distrito Federal, escape de expressões do usuário, fonte alternativa em falha transitória, respeito a HTTP 429, cache e agregação de chamadas iguais.
 - Sessão preservada no reload da mesma aba, renovação única em chamadas concorrentes, gravação de resultados em lote e saída local mesmo quando o serviço está indisponível.
-- Interface em DOM LinkeDOM: busca → formulário de login → API HTTP compartilhada → normalização OSM → gravação REST em lote → resultado na tela → restauração da conta e dos registros ao recarregar. Auth/OSM/REST usam transporte de teste nesse fluxo.
+- Interface em DOM LinkeDOM: busca direta, sem cadastro → API HTTP compartilhada → normalização OSM → gravação local → resultado na tela → registros preservados ao recarregar. Chamadas inesperadas a Auth/REST falham neste fluxo; apenas a fonte usa transporte de teste.
 - Demonstração separada, filtro, ficha, briefing de 14 seções, versões, favoritos e preservação do filtro ao voltar.
 - Direitos/validade por campo/fonte, CSV seguro, WhatsApp confirmado, pontuação determinística, cobertura desconhecida e exclusão de registros suprimidos do ranking.
 - Auditoria restrita à operação e proteção SSRF, incluindo esquemas, portas, IPs privados/reservados/metadados e DNS misturado. Testes da auditoria usam páginas de teste, sem afirmar inspeção de empresa real.

@@ -6,9 +6,9 @@ Prospecção de comércios para criação de sites: busca → ficha com fontes �
 
 O projeto **Prospecta IA** no Supabase já está conectado pelo código. As tabelas, políticas de isolamento entre contas e função de quota foram instaladas e verificadas no banco. A busca OpenStreetMap já vem ativada e identificada com o endereço deste repositório. **Não é necessário criar `.env.local`, copiar chaves ou executar SQL para usar esta instalação.**
 
-1. Abra o site e clique em **Buscar comércios** ou na conta do menu.
-2. Crie sua conta, confirme o e-mail se solicitado e entre. Isso protege seus registros; não é configuração técnica. Após confirmar, volte ao site e faça login.
-3. Informe cidade/UF e, se desejar, segmento, palavra-chave e bairro. A busca pendente continua após entrar. Os novos resultados são salvos na sua conta automaticamente, em um único lote.
+1. Abra o site e informe cidade/UF e, se desejar, segmento, palavra-chave e bairro.
+2. Clique em **Buscar comércios**. **Não é preciso cadastro, login ou código de acesso**, inclusive para atualizar os detalhes da fonte.
+3. Os novos resultados são salvos automaticamente neste navegador. A conta é opcional para sincronização entre dispositivos; você pode entrar pelo menu quando desejar.
 4. Abra a ficha, confirme a identidade e registre as evidências. A pontuação depende do que foi verificado, sem inventar probabilidade de compra.
 5. Gere o briefing completo em **Prompt do site**. Contatos e mensagens exigem revisão; WhatsApp só é ativado para um número confirmado com país e DDD.
 
@@ -50,7 +50,7 @@ A sessão é renovada automaticamente e preservada em `sessionStorage` ao recarr
 
 `profiles` guarda preferências, `businesses` guarda cada ficha/histórico atomicamente em JSONB e `api_usage` controla quotas. Registros de outra conta não podem ser lidos ou alterados. A chave `sb_publishable_...` do código é pública por definição; acesso a registros depende do JWT do usuário e das políticas RLS, nunca dessa chave isolada. Não há chave secreta ou `service_role` no projeto.
 
-Limites: 500 KB por ficha, 1.000 registros carregados por conta, 30 consultas externas/hora/conta e três segundos entre chamadas. Colaboração simultânea na mesma ficha usa a última gravação; resolução de conflitos entre abas está fora desta versão.
+Limites: 500 KB por ficha, 1.000 registros carregados por conta, 30 buscas/consultas de detalhes por hora por IP e instância, com três segundos entre chamadas. O IP é resumido por hash em memória; na Vercel, o identificador vem do cabeçalho sobrescrito pela plataforma, e no servidor local vem da conexão real. Auditorias continuam autenticadas, com quota persistente de 30 operações/hora/conta. Colaboração simultânea na mesma ficha usa a última gravação; resolução de conflitos entre abas está fora desta versão.
 
 ## Auditoria de site
 
@@ -70,7 +70,7 @@ Nesta manutenção, o plugin Vercel recusou acesso à conta do projeto com **403
 
 `.env.example` lista somente substituições opcionais. Para usar outro Supabase, informe **URL e chave publicável juntas**, instale `supabase/schema.sql` em um projeto vazio e configure Auth desse novo projeto. Não execute o schema inicial novamente no banco já instalado.
 
-`ENABLE_OSM=false` desativa a busca; `AUDIT_MODE=disabled` desativa auditorias; `AUDIT_ALLOWED_HOSTS` restringe os domínios quando desejado. `DISABLE_CLOUD=true` com `APP_ACCESS_KEY` permite instalação individual sem Supabase, com limites por instância. Nunca envie senhas/tokens ao Git.
+`ENABLE_OSM=false` desativa a busca; `AUDIT_MODE=disabled` desativa auditorias; `AUDIT_ALLOWED_HOSTS` restringe os domínios quando desejado. `DISABLE_CLOUD=true` com `APP_ACCESS_KEY` permite instalação individual sem Supabase, para auditorias, com limites por instância. A busca permanece pública nesse modo. Nunca envie senhas/tokens ao Git.
 
 Fontes OSM têm validade de 30 dias; auditorias, sete dias. Retenção local segue preferências. Exclusão remota e revisão de registros vencidos são manuais. Não há disparo automático de mensagens, pagamentos, raspagem de Google Maps ou integração de IA generativa nesta versão.
 

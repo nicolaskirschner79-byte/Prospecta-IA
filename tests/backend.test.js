@@ -18,10 +18,11 @@ test('auditoria parcial mede somente critérios observáveis e não inventa Ligh
 test('403, 429 e robots restritivo produzem análise inconclusiva/revisão',async()=>{for(const status of [403,429])await assert.rejects(()=>auditWebsite('https://example.com',{AUDIT_ALLOWED_HOSTS:'example.com'},{getter:async url=>({url,status:url.endsWith('robots.txt')?404:status,body:''})}),/Não foi possível analisar/);await assert.rejects(()=>auditWebsite('https://example.com',{AUDIT_ALLOWED_HOSTS:'example.com'},{getter:async url=>({url,status:200,body:'User-agent: *\nDisallow: /privado'})}),/robots/);});
 test('configuração pública nunca expõe acesso privado ou chave PageSpeed',()=>{const c=publicConfig({APP_ACCESS_KEY:'SEGREDO_DE_TESTE',PAGESPEED_API_KEY:'CHAVE_DE_TESTE'});assert.ok(!JSON.stringify(c).includes('SEGREDO_DE_TESTE'));assert.ok(!JSON.stringify(c).includes('CHAVE_DE_TESTE'));assert.equal(c.search,'available');assert.equal(c.access,'access_key');});
 test('limite de resposta é aplicado durante leitura do stream',async()=>{await assert.rejects(()=>limitedJSON(new Response('x'.repeat(2000)),1000),/limite/);});
-test('HTTP integra configuração, arquivos estáticos, autenticação e fonte ausente',async t=>{
+test('HTTP integra busca pública, auditoria protegida e arquivos estáticos',async t=>{
   const app=createApp({});await new Promise(r=>app.listen(0,'127.0.0.1',r));t.after(()=>new Promise(r=>app.close(r)));const root=`http://127.0.0.1:${app.address().port}`;
   let r=await fetch(root+'/api/config');assert.equal(r.status,200);assert.equal((await r.json()).ai,'template');
   r=await fetch(root+'/');assert.equal(r.status,200);assert.ok((await r.text()).includes('Buscar comércios'));assert.ok(r.headers.get('content-security-policy').includes("object-src 'none'"));
-  r=await fetch(root+'/api/search',{method:'POST',body:'{}'});assert.equal(r.status,401);assert.equal((await r.json()).code,'UNAUTHORIZED');
+  r=await fetch(root+'/api/audit',{method:'POST',body:'{}'});assert.equal(r.status,401);assert.equal((await r.json()).code,'UNAUTHORIZED');
+  r=await fetch(root+'/api/search',{method:'POST',body:'{}'});assert.equal(r.status,400);assert.equal((await r.json()).code,'INPUT');
   r=await fetch(root+'/server/handler.js');assert.equal(r.status,404);
 });

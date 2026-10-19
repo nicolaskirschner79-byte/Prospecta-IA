@@ -6,12 +6,12 @@ Respostas JSON, UTF-8, `Cache-Control: no-store`. Backend local e serverless com
 
 | Operação | Contrato |
 |---|---|
-| `GET /api/config` | público; `{search, audit, ai:'template', access, supabase:{url,key}|null}`. Somente URL/chave **publicável** Supabase; nunca acesso privado/PageSpeed/segredos |
-| `POST /api/search` | `{city:string,uf:string,query?:string,district?:string,segments?:string[]}`; resposta `{state,businesses:Business[],nextCursor:null,partial:true,notice,attribution,licenseURL}` |
-| `POST /api/details` | `{id:'osm-node-123'}` (ou way/relation); `{business:Business,state}`. Interface revisa diferenças em vez de sobrescrever |
+| `GET /api/config` | público; `{search, searchAccess:'public', audit, ai:'template', access, supabase:{url,key}|null}`. Somente URL/chave **publicável** Supabase; nunca acesso privado/PageSpeed/segredos |
+| `POST /api/search` | público, sem autenticação; `{city:string,uf:string,query?:string,district?:string,segments?:string[]}`; resposta `{state,businesses:Business[],nextCursor:null,partial:true,notice,attribution,licenseURL}` |
+| `POST /api/details` | público, sem autenticação; `{id:'osm-node-123'}` (ou way/relation); `{business:Business,state}`. Interface revisa diferenças em vez de sobrescrever |
 | `POST /api/audit` | `{url:'https://dominio-autorizado',authorized:true}`; `{id,at,expiresAt,url,tests,performance,permissions,limits,state:'partial'}` |
 
-A instalação resolve automaticamente URL/chave publicável do projeto Prospecta IA e identificação da fonte em `server/config.js`; variáveis de ambiente são substituições opcionais. Operações POST exigem `Authorization: Bearer <token Supabase>` validado em `/auth/v1/user`, ou `x-access-key` para modo individual configurado. Segredos nunca aparecem na configuração pública. Com conta, `consume_api_quota()` reserva uso de forma atômica no Postgres. Operações custosas têm limite de concorrência por instância. Pedidos inválidos também podem consumir quota, por segurança.
+A instalação resolve automaticamente URL/chave publicável do projeto Prospecta IA e identificação da fonte em `server/config.js`; variáveis de ambiente são substituições opcionais. Somente `POST /api/audit` exige `Authorization: Bearer <token Supabase>` validado em `/auth/v1/user`, ou `x-access-key` para modo individual configurado. Segredos nunca aparecem na configuração pública. Com conta, `consume_api_quota()` reserva uso de forma atômica no Postgres. Operações custosas têm limite de concorrência por instância. Pedidos inválidos também podem consumir quota, por segurança.
 
 Erros: `{state,code,message}`. Status: 400 entrada/URL; 401 sessão; 403 domínio sem autorização; 404 recurso; 405 método; 413 tamanho; 422 análise inconclusiva; 429 limite/concorrência; 502 fonte/resposta; 503 fonte/acesso/quota não configurados ou indisponíveis; 504 timeout. Estados públicos: `not_configured`, `available`, `invalid_credential`, `limit`, `unavailable`, `partial`. Mensagens externas cruas/chaves não são devolvidas.
 
@@ -46,3 +46,5 @@ CSV de entrada: cabeçalho `name` obrigatório; demais campos do modelo são opc
 Auditoria: `authorized:true` continua obrigatório. Sem uma allowlist personalizada, somente o domínio informado e sua variante www são autorizados nessa operação, preservando a validação HTTPS/DNS/IP. `AUDIT_MODE=disabled` desativa a função.
 
 Sessão: tokens são mantidos em sessionStorage por projeto para restaurar a mesma aba; renovação concorrente é agregada. Busca salva registros em uma única requisição REST de upsert. Cache do provedor: cinco minutos, 12 entradas por instância, com horário original da coleta e duas tentativas no máximo em falhas transitórias.
+
+Busca e detalhes não consultam Auth nem reservam quota por conta; uma sessão expirada ou o banco indisponível não bloqueiam essas rotas. O limite público é de 30 operações/hora/IP/instância, com intervalo de três segundos. Cabeçalhos de IP enviados pelo visitante são ignorados fora da Vercel. Visitantes salvam resultados no armazenamento local; sincronização em conta é opcional. As políticas RLS do banco permanecem inalteradas.

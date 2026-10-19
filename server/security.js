@@ -1,7 +1,7 @@
 import dns from 'node:dns/promises';
 import https from 'node:https';
 import { isIP } from 'node:net';
-import { timingSafeEqual } from 'node:crypto';
+import { timingSafeEqual,createHash } from 'node:crypto';
 export class AppError extends Error { constructor(status,code,message){super(message);this.status=status;this.code=code;} }
 export function publicIP(ip){
   if(isIP(ip)===4){const [a,b,c]=ip.split('.').map(Number);return !(a===0||a===10||a===127||a>=224||(a===100&&b>=64&&b<=127)||(a===169&&b===254)||(a===172&&b>=16&&b<=31)||(a===192&&(b===168||b===0||b===2||b===88&&c===99))||(a===198&&(b===18||b===19||b===51&&c===100))||(a===203&&b===0&&c===113));}
@@ -41,6 +41,13 @@ export async function safeGet(raw,{allowedHosts,lookup=dns.lookup,maxBytes=70000
   return result;
 }
 export function equalSecret(a,b){const x=Buffer.from(a||''),y=Buffer.from(b||'');return x.length>0&&x.length===y.length&&timingSafeEqual(x,y);}
+export function guestRateKey(req,env={}){
+  // A Vercel sobrescreve X-Forwarded-For. Fora dela, usar a conexão real,
+  // sem confiar em cabeçalhos de IP enviados pelo próprio visitante.
+  const forwarded=env.VERCEL==='1'&&typeof req.headers?.['x-forwarded-for']==='string'?req.headers['x-forwarded-for'].trim():'';
+  const ip=isIP(forwarded)?forwarded:req.socket?.remoteAddress||'unknown';
+  return 'guest:'+createHash('sha256').update(ip).digest('hex');
+}
 const buckets=new Map();let inFlight=0;
 export function rateLimit(key,now=Date.now()){
   for(const [k,v]of buckets)if(now-v.at>3600000)buckets.delete(k);
