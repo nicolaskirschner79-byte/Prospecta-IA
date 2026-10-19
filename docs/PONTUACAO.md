@@ -1,22 +1,22 @@
-# Avaliação automática de potencial comercial, regra 2.0.0
+# Potencial individual de prospecção, regra 3.0.0
 
-A interface usa `evaluateOpportunity` para avaliar todos os comércios desde a primeira busca. Retorna score de 0–100, prioridade, motivos, proposta, próxima ação, confiança e cobertura de evidências. `probability` é `null`: a plataforma não tem dados de conversão para estimar uma probabilidade de fechamento calibrada. A nota organiza a prospecção e não presume dinheiro, intenção ou decisão de compra.
+`evaluateOpportunity` retorna a pontuação de 0–100 somente quando existem dados individuais suficientes: ao menos duas informações comerciais além de nome/cidade e um canal utilizável, ou verificações manuais. Quando faltam esses dados, `score:null`, prioridade pendente e texto “Dados insuficientes” substituem a antiga nota repetida. Não se adiciona ruído, números aleatórios ou variação pelo nome do negócio.
 
-| Critério | Pontuação inicial padrão | Evolução com evidências |
+A nota é um índice de prospecção, com justificativas e confiança. `probability:null` permanece: interesse, orçamento e decisão não são inferidos do cadastro. Uma mesma combinação de sinais pode legitimamente receber a mesma pontuação.
+
+| Grupo | Avaliação inicial | Verificações registradas |
 |---|---|---|
-| Oportunidade digital, peso 45 | Domínio informado: 5; somente rede cadastrada: 15; nenhum domínio/rede: 12, como oportunidade de investigação | Critério digital verificado da regra de evidências substitui integralmente a hipótese; não se acumulam pontos |
-| Informações/operação, peso 20 | Completude de nome, cidade, endereço, horários, descrição e serviços: até 4 pontos por verificação ainda desconhecida, máximo 8 | Atividade recente e consistência confirmadas: até 10 cada; respostas negativas valem zero e prevalecem |
-| Utilidade de um site, peso 15 | Até 15 para segmentos definidos, 6 para outros serviços; hipóteses explicadas pelo perfil | Caso de uso, organização e benefício registrados substituem cada hipótese; um resultado negativo não é substituído por uma sugestão |
-| Contato, peso 10 | Telefone/e-mail publicado: 3; rede social: 1; sem canal: 0 | WhatsApp confirmado: 7; outro canal confirmado: 3; pesquisa sem contato não inventa canal |
+| Oportunidade digital, peso 45 | Domínio próprio informado: 5; rede/plataforma sem domínio: 15; ausência na fonte: 12 como investigação | Situação digital verificada substitui os pontos iniciais; ausência na fonte não prova ausência real |
+| Dados comerciais, peso 20 | Quantidade de endereço, horários, descrição, serviços, telefone, e-mail, site e social; até 10 pontos, incluindo atualização conhecida de catálogo | Atividade recente e consistência verificadas prevalecem; dado publicado não confirma operação atual |
+| Adequação da solução, peso 15 | Perfis diferentes para catálogo, agendamento, projeto, cardápio e presença institucional. Veículos/imóveis: até 15; engenharia: 14,5; móveis: 14; contabilidade: 14; moda/educação: 13,5; saúde: 13; beleza/fitness: 12,5; alimentação/pets: 12; oficina: 11,5; mercado: 8; outros: 6 | Caso de uso, organização e benefício registrados substituem cada hipótese, inclusive avaliações negativas |
+| Contato, peso 10 | Telefone: 3; e-mail: 2; rede social: 1; WhatsApp explícito: 4; soma limitada a 7 sem confirmação direta | WhatsApp confirmado: 7; outro canal confirmado: 3; pesquisa sem canal pode ser zero conhecido |
 | Negociação, peso 10 | Sem sinal registrado: zero | Interesse explícito: 5; próximo passo confirmado: 5 |
 
-Os valores escalam pelos pesos configurados, sem dividir pela cobertura para produzir notas altas. Os mesmos limiares configuráveis de prioridade se aplicam. O cadastro incompleto já tem avaliação preliminar; não precisa aguardar um formulário manual para ser ordenado. A maior parte das amostras sem contato nem evidências permanece com nota e confiança baixas, em vez de receber uma alta chance inventada.
+Pesos e limiares continuam configuráveis. Não se divide a nota pela cobertura para inflar uma base incompleta. A confiança descreve a qualidade das verificações, sem representar intervalo estatístico: alta exige identidade/elegibilidade e 80% de cobertura; média, identidade e 40%; demais casos são baixos.
 
-Confiança alta exige identidade, elegibilidade e pelo menos 80% de cobertura da análise por evidências; média exige identidade confirmada e 40%; demais casos são baixos. Isso descreve a base da avaliação, sem representar intervalo estatístico de confiança. Conflitos ou identidade negada bloqueiam prioridade ativa; fontes vencidas não contam. Não contatar, encerrado, duplicado, fora do escopo, Fechado, Perdido e falta de interesse explicitamente registrada ficam fora da prospecção ativa.
+Não contatar, encerrado, duplicado, fora do escopo, Fechado, Perdido e interesse negado ficam fora da prospecção ativa. Identidade negada ou conflitante exige revisão. Escolas/creches identificadas como estaduais/municipais/públicas no nome e unidades de saúde nomeadas UBS/Unidade Básica de Saúde ficam fora da prioridade de comércios privados, com justificativa sujeita a revisão.
 
-Registros de educação cujo nome começa por “Escola/Creche Estadual/Municipal/Pública” e registros de saúde iniciados por “UBS” ou “Unidade Básica de Saúde” ficam fora da prioridade de comércios privados. É uma indicação pelo nome, exibida como tal e sujeita a revisão; não é uma investigação jurídica da instituição.
-
-Os perfis por segmento também orientam o que propor e o próximo passo. A classificação usa dados permitidos para retenção e não realiza navegação, auditoria ou uma chamada de IA escondida.
+Fontes vencidas, campos conflitantes e informações sem retenção permitida não contam. Um domínio publicado não é rotulado como site ruim sem análise. A confiança de existência da base Overture não vira disposição de compra. Os prompts usam a proposta correspondente ao perfil e aos campos efetivamente disponíveis.
 
 ## Índice de evidências, regra 1.0.0
 

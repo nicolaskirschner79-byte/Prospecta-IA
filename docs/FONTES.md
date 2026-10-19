@@ -2,6 +2,16 @@
 
 Documentação consultada em 19/10/2026. Esta implementação não assume que “público” significa uso irrestrito.
 
+## Overture Maps Places
+
+Fontes oficiais verificadas: [schema de Places](https://docs.overturemaps.org/schema/reference/places/place/), [PMTiles oficiais](https://docs.overturemaps.org/examples/overture-tiles/), [catálogo da release](https://stac.overturemaps.org/2026-09-23.1/places/catalog.json) e [atribuição e licenças](https://docs.overturemaps.org/attribution/).
+
+A integração lê intervalos HTTP do arquivo Places PMTiles disponibilizado pela Overture, com nome, endereço, classificação e canais de contato do registro. Um resultado só é aceito com país BR, cidade/UF correspondentes, ID GERS, confiança da origem de pelo menos 0,6 e licenças reconhecidas (CDLA-Permissive-2.0, CC0-1.0, Apache-2.0, CC-BY-4.0, ODbL-1.0). A confiança de existência da Overture não é apresentada como chance de venda. Não são usados fotos, avaliações ou conteúdo de perfis sociais.
+
+Cada fonte preserva ID do registro, fornecedores, release, data da coleta e licenças com links para seus termos. A data de atualização do fornecedor também é registrada quando publicada. O catálogo não garante atualidade dos contatos; publicação não equivale a confirmação direta do titular. Telefones malformados são descartados; números de telefone não são inferidos como WhatsApp. Dados sem contatos publicados continuam ausentes.
+
+A consulta é uma amostra de até 50 registros de recortes da área central; não se apresenta como cobertura completa municipal. Respostas sem HTTP 206/range válido são rejeitadas, em vez de baixar o arquivo mundial. Leituras e caches têm limites de tempo, bytes e quantidade.
+
 ## OpenStreetMap / Overpass
 
 - [Copyright/licença](https://www.openstreetmap.org/copyright): ODbL; atribuição e compartilhamento aplicável à base derivada. O app mostra atribuição e inclui licença/fontes nas exportações.

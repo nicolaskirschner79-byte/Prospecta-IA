@@ -7,5 +7,5 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
-node --env-file-if-exists=.env.local server/dev.js --open
+call npm start -- --open
 pause

@@ -16,7 +16,7 @@ export async function searchBusinesses(input,{signal,fetcher=fetch,now=Date.now,
   const timer=setTimeout(()=>{timedOut=true;controller.abort();},timeoutMs);
   try{
     const work=(async()=>{
-      const canonical=JSON.parse(key),params=new URLSearchParams({...canonical,city:String(input.city||'').trim().replace(/\s+/g,' '),segments:canonical.segments.join(',')});
+      const canonical=JSON.parse(key),params=new URLSearchParams({...canonical,city:String(input.city||'').trim().replace(/\s+/g,' '),segments:canonical.segments.join(','),v:'3'});
       const response=await fetcher('/api/search?'+params,{method:'GET',signal:controller.signal});
       let data;try{data=await response.json();}catch{throw new Error('O servidor não retornou uma resposta válida. Tente novamente.');}
       if(!response.ok){const error=new Error(data.message||'Não foi possível consultar a fonte agora.');error.status=response.status;throw error;}

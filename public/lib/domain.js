@@ -35,7 +35,7 @@ export function e164(raw) {
 export function whatsappURL(b, message = '') {
   if (b.demo) return null;
   const f = b.fields?.whatsapp;
-  if (!f || !['verified', 'user'].includes(f.status) || !f.confirmed) return null;
+  if (!f || !['verified', 'user'].includes(f.status) || (!f.confirmed&&!f.published)) return null;
   const source=b.sources?.find(s=>s.id===f.sourceId),expires=f.expiresAt||source?.expiresAt;
   if(expires&&!(Date.parse(expires)>Date.now()))return null;
   if (f.value?.startsWith('https://wa.me/')) {

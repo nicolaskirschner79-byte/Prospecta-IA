@@ -2,6 +2,7 @@ import { STATES } from '../../public/lib/regions.js';
 import { normalizeText,SEGMENTS } from '../../public/lib/domain.js';
 import { AppError,limitedJSON } from '../security.js';
 import { OSM_TAGS,normalizeOSM,buildQuery } from './osm.js';
+import {cityLocation} from './city-location.js';
 
 const caches=new WeakMap();
 const fold=value=>normalizeText(value).replace(/\s+/g,' ');
@@ -49,16 +50,7 @@ export class PhotonProvider{
       const controller=new AbortController();let timer;
       const work=(async()=>{
         if(state.blockedUntil>this.now())throw new AppError(429,'LIMIT','A fonte está em pausa temporária. Aguarde para pesquisar novamente.');
-        let location=state.cities.get(cityKey);
-        if(!location||this.now()-location.at>86400000){
-          const params=new URLSearchParams({q:input.city,countrycode:'BR',layer:'city',limit:'10'});
-          const features=await this.json('api/',params,controller.signal);
-          const city=features.find(feature=>{const p=feature.properties||{};return fold(p.name)===fold(input.city)&&String(p.countrycode).toUpperCase()==='BR'&&[fold(STATES[input.uf]),fold(input.uf)].includes(fold(p.state));});
-          const extent=city?.properties?.extent;
-          if(!Array.isArray(extent)||extent.length!==4||!extent.every(Number.isFinite)||extent[0]>=extent[2]||extent[3]>=extent[1]||Math.abs(extent[0])>180||Math.abs(extent[2])>180||Math.abs(extent[1])>90||Math.abs(extent[3])>90)throw new AppError(503,'AREA_UNAVAILABLE','Não foi possível localizar a área deste município na fonte.');
-          location={bbox:[extent[0],extent[3],extent[2],extent[1]].join(','),at:this.now()};
-          if(state.cities.size>=64)state.cities.delete(state.cities.keys().next().value);state.cities.set(cityKey,location);
-        }
+        const area=await cityLocation(input,{fetcher:this.fetcher,contact:this.contact,signal:controller.signal,now:this.now}),location={bbox:area.bbox.join(',')};
         const params=new URLSearchParams({bbox:location.bbox,include:photonCategories(input.segments),limit:'50',countrycode:'BR'});
         const features=await this.json('api/',params,controller.signal);
         const value={features,collectedAt:new Date(this.now()).toISOString(),at:this.now(),cache:'miss'};

@@ -33,10 +33,10 @@
     <main id="main" tabindex="-1">
       <div id="mode-banner" class="mode-banner" hidden></div>
       <section id="search-page">
-        <div class="page-heading"><div><p class="eyebrow"><span></span> INTELIGÊNCIA PARA A SUA PROSPECÇÃO</p><h1>Seu próximo projeto<br>começa com uma <em>boa oportunidade.</em></h1><p class="subheading">Descubra negócios, entenda o contexto e prepare uma abordagem que faz sentido.</p></div><button class="button secondary" data-action="new"><span data-icon="plus"></span>Cadastrar comércio</button></div>
+        <div class="page-heading"><div><p class="eyebrow"><span></span> INTELIGÊNCIA PARA A SUA PROSPECÇÃO</p><h1>Encontre seu próximo cliente.</h1><p class="subheading">Contatos, análise e um prompt pronto para cada comércio.</p></div><button class="button secondary" data-action="new"><span data-icon="plus"></span>Cadastrar comércio</button></div>
         <div class="stats" id="stats"></div>
         <section class="search-panel" aria-label="Pesquisa de comércios">
-          <div class="panel-title"><span class="section-icon" data-icon="radar"></span><div><h2>Explore novas oportunidades</h2><p>Busque sem cadastro: defina sua região e encontre negócios para analisar.</p></div><span id="provider-badge" class="badge neutral">Verificando configuração</span></div>
+          <div class="panel-title"><span class="section-icon" data-icon="radar"></span><div><h2>Buscar comércios</h2><p>Busque sem cadastro: defina sua região e encontre negócios para analisar.</p></div><span id="provider-badge" class="badge neutral">Verificando configuração</span></div>
           <form id="search-form" class="search-form">
             <label class="query-field">O que você procura?<span class="input-wrap"><span data-icon="search"></span><input id="external-query" name="query" placeholder="Busque por comércio, segmento ou palavra-chave" maxlength="100"></span></label>
             <label class="uf-field">Estado<select name="uf" id="uf" aria-label="Estado"></select></label>
@@ -44,18 +44,18 @@
             <label>Bairro <span class="optional">opcional</span><input name="district" id="district" placeholder="Todos os bairros" maxlength="80"></label>
             <button type="submit" class="button primary" id="search-button" disabled><span data-icon="search"></span>Buscar comércios</button>
           </form>
-          <div class="search-foot"><p id="source-note"><span data-icon="info"></span>Fonte de busca não configurada. Cadastre ou importe uma base autorizada para começar.</p><button class="text-button" data-action="import"><span data-icon="upload"></span>Importar CSV</button></div>
+          <div class="search-foot"><details class="search-details"><summary>Informações da busca</summary><p id="source-note"><span data-icon="info"></span>Fonte de busca não configurada. Cadastre ou importe uma base autorizada para começar.</p></details><button class="text-button" data-action="import"><span data-icon="upload"></span>Importar CSV</button></div>
         </section>
         <section class="results-section" aria-label="Resultados e filtros">
-          <div class="results-heading"><div><h2 id="results-title">Comércios para explorar <span id="result-count">0</span></h2><p id="results-subtitle">Os filtros abaixo se aplicam apenas à base carregada.</p></div><div class="results-actions"><button class="button secondary compact filter-toggle" data-action="filters"><span data-icon="filter"></span>Filtros <span id="filter-count"></span></button><button class="text-button" data-action="export"><span data-icon="download"></span>Exportar CSV</button></div></div>
+          <div class="results-heading"><div><h2 id="results-title">Comércios para explorar <span id="result-count">0</span></h2><p id="results-subtitle">Abra uma análise para ver os motivos da pontuação.</p></div><div class="results-actions"><button class="button secondary compact filter-toggle" data-action="filters" aria-expanded="false" aria-controls="filters"><span data-icon="filter"></span>Filtros <span id="filter-count"></span></button><button class="text-button" data-action="export"><span data-icon="download"></span>Exportar CSV</button></div></div>
           <div class="results-layout">
-            <aside class="filters" id="filters" aria-label="Filtros locais">
+            <aside class="filters" id="filters" aria-label="Filtros locais" hidden>
               <div class="filter-title"><strong><span data-icon="filter"></span>Filtros locais</strong><button class="text-button" data-action="clear-filters">Limpar</button></div>
               <label>Filtrar resultados<input id="local-query" type="search" placeholder="Nome, serviço ou palavra-chave"></label>
               <fieldset><legend>Segmento do comércio</legend><div id="segment-options" class="segment-options"></div></fieldset>
               <label>Situação do site<select id="filter-digital"></select></label>
               <label>Prioridade<select id="filter-priority"><option value="">Todas as prioridades</option value="high">Alta</option><option value="medium">Média</option><option value="low">Baixa</option><option value="pending">Identidade a revisar</option></select></label>
-              <label>Canal disponível<select id="filter-contact"><option value="">Qualquer contato</option><option value="whatsapp">WhatsApp confirmado</option><option value="phone">Telefone</option><option value="email">E-mail</option><option value="unknown">Contato não confirmado</option></select></label>
+              <label>Canal disponível<select id="filter-contact"><option value="">Qualquer contato</option><option value="whatsapp">WhatsApp publicado</option><option value="phone">Telefone</option><option value="email">E-mail</option><option value="unknown">Contato não confirmado</option></select></label>
               <label>Evidências<select id="filter-coverage"><option value="">Qualquer cobertura</option><option value="70">70% ou mais</option><option value="90">90% ou mais</option><option value="incomplete">Abaixo de 70%</option></select></label>
               <label>Etapa comercial<select id="filter-stage"></select></label>
               <label>Verificação desde<input type="date" id="filter-date"></label>
@@ -73,7 +73,7 @@
         </section>
       </section>
       <section id="settings-page" hidden></section>
-      <footer class="footer"><span>Prospecta IA <span class="footer-dot">·</span> Contexto para criar conexões.</span><span>Briefings por template · sem envio automático de mensagens</span></footer>
+      <footer class="footer"><span>Prospecta IA <span class="footer-dot">·</span> Contexto para criar conexões.</span><span>Dados públicos · confirme os contatos antes da abordagem</span></footer>
     </main>
   </div>
   <dialog id="detail-dialog" class="detail-dialog" aria-labelledby="detail-title"><div id="detail-content"></div></dialog>

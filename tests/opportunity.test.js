@@ -6,21 +6,21 @@ import {calculateScore} from '../public/lib/score.js';
 const base=()=>newBusiness({name:'Salão Exemplo',city:'Itapeva',uf:'SP',segment:'beauty'});
 const assess=(b,key,value,extra={})=>b.assessments[key]={...field('',b.sources[0].id),value,status:'user',reason:'Informação confirmada diretamente para o teste.',...extra};
 
-test('comércio recém-buscado recebe avaliação inicial sem inventar interesse ou percentual de fechamento',()=>{
+test('cadastro só com nome e cidade não recebe uma nota artificial',()=>{
   const b=base(),before=structuredClone(b.assessments),result=evaluateOpportunity(b);
-  assert.ok(result.score>0&&result.score<60);assert.equal(result.eligible,true);assert.equal(result.preliminary,true);assert.equal(result.confidence,'low');
-  assert.equal(result.coverage,0);assert.equal(result.probability,null);assert.match(result.offer,/horário/);assert.match(result.explanation,/não é uma porcentagem/);
+  assert.equal(result.score,null);assert.equal(result.eligible,false);assert.equal(result.preliminary,true);assert.equal(result.confidence,'low');
+  assert.equal(result.coverage,0);assert.equal(result.probability,null);assert.match(result.offer,/horário/);assert.match(result.explanation,/Dados insuficientes/);
   assert.equal(result.parts.find(p=>p.id==='interest').points,0);assert.deepEqual(b.assessments,before);assert.equal(calculateScore(b).score,0,'evidências manuais não são fabricadas pela avaliação automática');
 });
 
 test('ausência na fonte não equivale a ausência confirmada; domínio existente não é julgado ruim',()=>{
-  const b=base(),unknown=evaluateOpportunity(b);b.fields.website=field('https://example.com',b.sources[0].id);
+  const b=base();b.fields.address=field('Rua de Teste, 1',b.sources[0].id);b.fields.phone=field('+551500000000',b.sources[0].id);const unknown=evaluateOpportunity(b);b.fields.website=field('https://example.com',b.sources[0].id);
   const site=evaluateOpportunity(b);assert.ok(site.score<unknown.score);assert.match(site.parts[0].reason,/não foram verificadas/);
   assess(b,'digital','absent',{sufficient:true});const confirmed=evaluateOpportunity(b);assert.ok(confirmed.score>unknown.score);assert.equal(confirmed.parts[0].mode,'evidence');
 });
 
 test('contatos publicados melhoram a investigação; confirmação melhora a nota sem transformar telefone em WhatsApp',()=>{
-  const b=base(),missing=evaluateOpportunity(b);b.fields.phone=field('+551500000000',b.sources[0].id);
+  const b=base();b.fields.address=field('Rua de Teste, 1',b.sources[0].id);const missing=evaluateOpportunity(b);b.fields.phone=field('+551500000000',b.sources[0].id);
   const published=evaluateOpportunity(b);assert.ok(published.score>missing.score);assert.match(published.parts.find(p=>p.id==='contact').reason,/confirmar titularidade/);
   b.fields.whatsapp=field('+551500000000',b.sources[0].id,{confirmed:true});const confirmed=evaluateOpportunity(b);assert.ok(confirmed.score>published.score);
   b.fields.whatsapp.status='conflict';assert.ok(evaluateOpportunity(b).score<confirmed.score);
@@ -54,5 +54,5 @@ test('escolas e unidades públicas identificadas pelo nome não são priorizadas
     const b=newBusiness({name,segment,city:'Itapeva',uf:'SP'}),result=evaluateOpportunity(b);
     assert.equal(result.priority,'excluded');assert.equal(result.score,0);assert.match(result.nextAction,/nome do cadastro indica/);
   }
-  for(const [name,segment]of [['Escola Particular de Teste','education'],['Clínica Exemplo','health'],['UBS Consultoria de Teste','other']])assert.equal(evaluateOpportunity(newBusiness({name,segment})).eligible,true);
+  for(const [name,segment]of [['Escola Particular de Teste','education'],['Clínica Exemplo','health'],['UBS Consultoria de Teste','other']])assert.notEqual(evaluateOpportunity(newBusiness({name,segment})).priority,'excluded');
 });

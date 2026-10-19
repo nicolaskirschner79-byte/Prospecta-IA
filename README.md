@@ -4,7 +4,7 @@ Prospecção de comércios para criação de sites: busca → ficha com fontes �
 
 ## Pronto para esta instalação
 
-O projeto **Prospecta IA** no Supabase já está conectado pelo código. As tabelas, políticas de isolamento entre contas e função de quota foram instaladas e verificadas no banco. A busca OpenStreetMap já vem ativada e identificada com o endereço deste repositório. **Não é necessário criar `.env.local`, copiar chaves ou executar SQL para usar esta instalação.**
+O projeto **Prospecta IA** no Supabase já está conectado pelo código. As tabelas, políticas de isolamento entre contas e função de quota foram instaladas e verificadas no banco. A busca em catálogos públicos já vem ativada e identificada com o endereço deste repositório. **Não é necessário criar `.env.local`, copiar chaves ou executar SQL para usar esta instalação.**
 
 1. Abra o site, escolha o estado e selecione uma cidade no catálogo pesquisável. Se desejar, informe segmento, palavra-chave e bairro.
 2. Clique em **Buscar comércios**. **Não é preciso cadastro, login ou código de acesso**, inclusive para atualizar os detalhes da fonte.
@@ -24,7 +24,7 @@ Com **Node.js 24 LTS** instalado:
 npm start
 ```
 
-Abra `http://localhost:3000`. No Windows, também pode abrir `iniciar.bat`. O runtime usa APIs nativas do Node, sem instalar pacotes nem configurar banco. Não abra `index.html` diretamente por `file://`.
+Abra `http://localhost:3000`. No Windows, também pode abrir `iniciar.bat`. O início prepara automaticamente as dependências necessárias; a hospedagem instala tudo no deploy. Não é necessário configurar banco nem fornecer chave para as buscas. Não abra `index.html` diretamente por `file://`.
 
 Para desenvolver/verificar:
 
@@ -37,20 +37,22 @@ npm run build
 
 ## Busca e disponibilidade
 
-- Fonte principal: índice Photon/OpenStreetMap (`https://photon.komoot.io`). A área municipal é localizada pela cidade e UF, e os resultados são conferidos por cidade, estado, país e categoria. Se houver falha transitória, uma consulta Overpass com prazo de cinco segundos tenta recuperar o resultado. HTTP 429 é respeitado, sem troca de fonte para contornar limite.
-- Catálogo de cidades por estado com 5.571 nomes oficiais do IBGE, incluindo acentos. Os 27 arquivos locais em `public/data/cities` dispensam outra API para preencher o seletor. Digitar “sao” encontra “São”; trocar a UF limpa a cidade anterior e impede pesquisar uma cidade de outro estado.
-- Cache por dez minutos no navegador e na instância, com agregação de chamadas iguais. Consultas GET públicas permitem cache na CDN do Vercel entre instâncias. Somente respostas bem-sucedidas são armazenadas; erros continuam sem cache. A data original da coleta é preservada.
-- O índice municipal no servidor valida cidade/UF sem depender de rede. A contingência Overpass usa códigos IBGE nas áreas OSM. A geocodificação do Photon, guardada por 24 horas, resolve homônimos conferindo a UF; candidatos sem cidade/estado correspondentes são descartados.
-- O Photon tem prazo total de sete segundos para localizar a área e consultar a amostra; a contingência Overpass tem cinco segundos. O navegador encerra a operação em 18 segundos e oferece **Cancelar busca**. Um timeout com lista vazia é tratado como falha, nunca como pesquisa concluída sem comércios.
-- Em indisponibilidade, uma consulta bem-sucedida anterior pode ser mostrada por até 12 horas, com aviso e data original. Sem uma consulta salva, o erro é exibido e os registros existentes são preservados. Serviços públicos externos não têm disponibilidade garantida.
-- Até 50 candidatos no Photon; até 100 objetos e 50 resultados na contingência Overpass. Palavra-chave/bairro filtram a amostra. A cobertura é parcial, os contatos podem não estar disponíveis e não há paginação externa.
+- Fonte principal: **Overture Maps Places**, consultada por recortes PMTiles do catálogo público. A versão integrada é `2026-09-23.1`. O servidor lê somente pequenos intervalos de bytes; não baixa o arquivo mundial e não exige chave de API.
+- A consulta usa o centro do município e uma amostra da área central; quando necessário, amplia para até quatro recortes adjacentes. Cidade, UF, país, categoria, licença e confiança mínima da origem são conferidos. Não representa todos os negócios da cidade.
+- Telefones, e-mails, sites e redes são os publicados no registro. Links de ligação/e-mail/site ficam nos cartões; WhatsApp só aparece quando o canal está explicitamente publicado ou foi confirmado. Telefone não é convertido em WhatsApp.
+- Photon/OpenStreetMap e Overpass permanecem como contingência em falhas transitórias. HTTP 429 é respeitado, sem trocar de fonte para contornar o limite. Todas as operações possuem prazo e cancelamento.
+- A consulta principal tem prazo total de 13 s; as contingências têm até 2 s e 1,5 s. O navegador encerra a espera em 18 s e oferece cancelar. Falhas preservam a base anterior.
+- Catálogo local de cidades por estado com 5.571 nomes oficiais do IBGE, incluindo acentos. Digitar “sao” encontra “São”; mudar a UF limpa a cidade anterior.
+- Recortes do catálogo são reutilizados por uma hora em até oito entradas por instância; geocodificação é guardada por 24 h. Cache de busca no navegador/CDN continua por dez minutos. Datas originais são preservadas.
+- Até 50 resultados por consulta. Palavra-chave e bairro filtram a amostra; um bairro precisa estar publicado no endereço para ser filtrado. Não há paginação externa.
+- Bases antigas compostas apenas pela amostra OSM sem contato, da mesma cidade selecionada, recebem uma tentativa automática de atualização por sessão. Atualizações preenchem campos ausentes somente quando a mesma unidade é identificada por ID, endereço ou proximidade com nome/cidade coincidentes; campos manuais preenchidos são preservados. Homônimos não são fundidos só pelo nome.
 - A falta de website no cadastro não comprova ausência de site. Telefones não viram WhatsApp automaticamente. Falhas externas nunca são substituídas por comércios inventados.
-- Atribuição **© OpenStreetMap contributors**, licença ODbL e fontes são preservadas nas exportações. Consulte [fontes e permissões](docs/FONTES.md).
+- Atribuição Overture Maps, fornecedores e licenças de cada registro são preservados; registros OSM mantêm **© OpenStreetMap contributors** e ODbL. Consulte [fontes e permissões](docs/FONTES.md).
 
 ## Avaliação e prompts automáticos
 
 - Novas buscas, cadastros e importações já recebem um prompt pronto. Bases antigas são atualizadas em memória ao carregar, sem refazer a busca e sem envio de dados a um provedor de IA.
-- `evaluateOpportunity` calcula potencial de venda e prioridade desde o primeiro cadastro. As hipóteses por segmento são identificadas; contato, interesse e presença digital confirmados prevalecem sobre sugestões. A confiança inicial é baixa quando faltam verificações. Negócios encerrados, perdidos ou suprimidos ficam fora da prospecção ativa.
+- `evaluateOpportunity` calcula potencial de venda e prioridade desde o primeiro cadastro. A versão 3 diferencia o modelo do site por segmento, presença digital, quantidade/tipo de contatos e dados específicos disponíveis. Apenas nome/cidade não recebem mais uma nota genérica: exibem “Dados insuficientes”. Mesmos dados podem ter a mesma nota; não há variação aleatória por nome. As hipóteses por segmento são identificadas; contato, interesse e presença digital confirmados prevalecem sobre sugestões. A confiança inicial é baixa quando faltam verificações. Negócios encerrados, perdidos ou suprimidos ficam fora da prospecção ativa.
 - A nota de evidências `calculateScore` e os snapshots anteriores permanecem disponíveis. Nenhuma regra inventa orçamento ou disposição de compra; a ausência de site na amostra não comprova ausência de site real.
 - O prompt automático acompanha mudanças nos dados e nas permissões sem acumular cópias. Edições e versões manuais são preservadas. O texto derivado é reconstruído dos dados ao carregar, evitando multiplicar armazenamento e tráfego por comércio; edições manuais são salvas normalmente.
 - A versão padrão para IA inclui apenas os campos com retenção, exportação e IA permitidas. Se o nome só permitir exportação, o prompt fica identificado para uso interno. Sem fonte exportável vigente, não é criado um prompt exportável.
@@ -86,3 +88,5 @@ Nesta manutenção, o plugin Vercel recusou acesso à conta do projeto com **403
 Fontes OSM têm validade de 30 dias; auditorias, sete dias. Retenção local segue preferências. Exclusão remota e revisão de registros vencidos são manuais. Não há disparo automático de mensagens, pagamentos, raspagem de Google Maps ou integração de IA generativa nesta versão.
 
 [Contrato da API](docs/API.md) · [Pontuação](docs/PONTUACAO.md) · [Validação](docs/VALIDACAO.md)
+
+A interface principal foi simplificada: filtros fechados por padrão, métricas compactas e cartões com nome, localização, potencial e contatos. Explicações, fontes e condições da avaliação ficam na ficha.

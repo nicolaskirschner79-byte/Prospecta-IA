@@ -42,7 +42,7 @@ export async function handleAPI(req,res,input=process.env){
       if(route==='search'){
         if(typeof body.city!=='string'||typeof body.uf!=='string'||(body.segments&&!Array.isArray(body.segments))||typeof(body.query||'')!=='string'||typeof(body.district||'')!=='string'||(body.query||'').length>100||(body.district||'').length>80)throw new AppError(400,'INPUT','Parâmetros de busca inválidos.');
         result=await bounded(()=>provider.search(body));
-      }else result=await bounded(()=>provider.details(String(body.id||'')));
+      }else result=await bounded(()=>provider.details({...body,id:String(body.id||'')}));
     }else if(route==='audit'){
       if(env.AUDIT_MODE==='disabled')throw new AppError(503,'NOT_CONFIGURED','Auditoria desativada nesta instalação.');
       if(typeof body.url!=='string'||body.url.length>2000||body.authorized!==true)throw new AppError(400,'INPUT','Confirme autorização para analisar o domínio.');

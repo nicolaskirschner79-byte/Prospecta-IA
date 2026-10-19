@@ -4,7 +4,7 @@ Manutenção em 19/10/2026. Runtime: Node.js 24.19.0.
 
 ## Código e fluxos automatizados
 
-`npm run build` executa verificação de sintaxe/ativos e a suíte Node. A suíte contém **83 testes**, incluindo:
+`npm run build` executa verificação de sintaxe/ativos e a suíte Node. A suíte contém **92 testes**, incluindo:
 
 - Configuração sem `.env.local`, projeto Supabase conectado, substituições opcionais sem misturar chaves de projetos diferentes e ausência de segredos na resposta pública.
 - Busca/detalhes públicos sem chamadas a Auth/REST, inclusive com token inválido; limite por visitante/instância, intervalo entre chamadas e proteção contra cabeçalho de IP forjado fora da Vercel. Auditoria mantém autenticação pelo contrato `/auth/v1/user` e reserva de quota. Nestes testes de contrato, o transporte externo é substituído por fixtures.
@@ -26,6 +26,14 @@ Manutenção em 19/10/2026. Runtime: Node.js 24.19.0.
 - Geração idempotente, atualização por mudança de dados/permissões, remoção de campos proibidos para IA, validade mínima e preparo de 50 comércios também são verificados. O texto automático é reconstruído para evitar aumento desnecessário do armazenamento.
 
 O fluxo real DOM → HTTP → Photon foi repetido com esta versão: 50 registros retornados, avaliados e com prompts disponíveis em cerca de 6,5 s. Reconstruir os 50 prompts levou aproximadamente 11 ms nesse teste; abrir o prompt do primeiro cartão não realizou nova consulta externa. As notas iniciais ficaram baixas, com baixa confiança, condizentes com a amostra sem evidências de compra. Não se trata de benchmark contínuo nem probabilidade de conversão. A verificação no navegador publicado também identificou escolas públicas e UBS na amostra: a avaliação agora os coloca fora da prioridade comercial quando nome e segmento os indicam, com justificativa e revisão de natureza.
+
+## Contatos, avaliação individual e simplificação
+
+- Consulta real Overture normalizada em Itapeva: 50 registros, 49 com telefone, 31 com e-mail e 21 com domínio próprio. Nesse teste, as notas individuais variaram entre 15 e 41, além de registros excluídos com zero. A execução levou cerca de 11,4 s no ambiente com proxy; não é garantia de latência contínua nem validação da titularidade/atualidade dos canais.
+- Transporte PMTiles é exercitado com arquivo binário de teste, cabeçalho, diretório e MVT, passando pelo mesmo leitor da produção. Testes incluem país/cidade/UF, licença, normalização de telefone/e-mail, WhatsApp explícito, range rejeitado e corpo sem conclusão.
+- A interface DOM/HTTP usa esse transporte para confirmar contato clicável, pontuação não genérica, filtros recolhidos/expansíveis, prompt pronto, reload, edição manual e cancelamento.
+- Verificados: nome diferente com dados iguais não muda a nota; informações distintas e segmento podem mudar a avaliação; nome/cidade sem contexto não recebem número artificial. Mesma unidade preenche campos ausentes, sem compartilhar contatos entre homônimos nem sobrescrever confirmações manuais.
+- A migração automática da amostra antiga é limitada à mesma cidade selecionada, somente registros OSM sem nenhum canal, uma tentativa por sessão.
 
 ## Verificado no Supabase conectado
 

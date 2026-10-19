@@ -9,7 +9,7 @@ Respostas JSON, UTF-8. Erros, POST e operações autenticadas usam `Cache-Contro
 | `GET /api/config` | público; `{search, searchAccess:'public', audit, ai:'template', access, supabase:{url,key}|null}`. Somente URL/chave **publicável** Supabase; nunca acesso privado/PageSpeed/segredos |
 | `GET /api/search` | público; parâmetros `city`, `uf`, `query`, `district`, `segments` (IDs separados por vírgula). Mesmo resultado da busca POST. Cache CDN por até 600 s, com revalidação em segundo plano e data original preservada |
 | `POST /api/search` | público, sem autenticação; `{city:string,uf:string,query?:string,district?:string,segments?:string[]}`; resposta `{state,businesses:Business[],nextCursor:null,partial:true,notice,attribution,licenseURL}` |
-| `POST /api/details` | público, sem autenticação; `{id:'osm-node-123'}` (ou way/relation); `{business:Business,state}`. Interface revisa diferenças em vez de sobrescrever |
+| `POST /api/details` | público, sem autenticação; `{id:'osm-node-123'}` (ou way/relation); para Overture, `{id:'overture-UUID',city,uf,location:{lon,lat}}`; `{business:Business,state}`. Interface revisa diferenças em vez de sobrescrever |
 | `POST /api/audit` | `{url:'https://dominio-autorizado',authorized:true}`; `{id,at,expiresAt,url,tests,performance,permissions,limits,state:'partial'}` |
 
 A instalação resolve automaticamente URL/chave publicável do projeto Prospecta IA e identificação da fonte em `server/config.js`; variáveis de ambiente são substituições opcionais. Somente `POST /api/audit` exige `Authorization: Bearer <token Supabase>` validado em `/auth/v1/user`, ou `x-access-key` para modo individual configurado. Segredos nunca aparecem na configuração pública. Com conta, `consume_api_quota()` reserva uso de forma atômica no Postgres. Operações custosas têm limite de concorrência por instância. Pedidos inválidos também podem consumir quota, por segurança.
@@ -25,7 +25,7 @@ Não há POST HTTP fictício para IA ou score. Estes contratos são funções re
 | `calculateScore(business,settings,now?)` | negócio + regras → `{score,coverage,priority,eligible,parts,pending,reasons,version,weights,thresholds,at}` |
 | `generateBriefing(business,settings,options)` | dados exportáveis + objetivo/estilo/páginas/funcionalidades → texto integral, 14 seções, uso interno |
 | `generateForAI(business,settings,options)` | interseção de dados permitidos para IA e exportação → texto integral; não executa um modelo |
-| `whatsappURL(business,message)` | WhatsApp confirmado com país/DDD → URL `wa.me` codificada, ou `null`; sem mutação de etapa |
+| `whatsappURL(business,message)` | WhatsApp confirmado ou explicitamente publicado com país/DDD → URL `wa.me` codificada, ou `null`; sem mutação de etapa |
 | `projectBusiness(business,action)` | campos/avaliações/históricos permitidos para ação → documento filtrado |
 
 ## Documento Business
@@ -38,7 +38,7 @@ A operação de retenção ocorre antes de gravar. Sem permissão para o nome, n
 
 ## Interface substituível de provedor
 
-`search(input)`, `details(id)`, normalização e registro de evidências por campo. BusinessProvider implementa o contrato, priorizando PhotonProvider e usando OSMProvider como contingência. Adicionar outro fornecedor exige conferir licença, campos, cobertura, limites, retenção/exportação/IA e testes com transporte substituído antes da ativação. Não retornar dados fictícios em falhas. Google Places não é fallback.
+`search(input)`, `details(id)`, normalização e registro de evidências por campo. BusinessProvider implementa o contrato, priorizando OvertureProvider; PhotonProvider e OSMProvider são contingências. Adicionar outro fornecedor exige conferir licença, campos, cobertura, limites, retenção/exportação/IA e testes com transporte substituído antes da ativação. Não retornar dados fictícios em falhas. Google Places não é fallback.
 
 ## Persistência Auth/Data API
 
@@ -48,7 +48,7 @@ CSV de entrada: cabeçalho `name` obrigatório; demais campos do modelo são opc
 
 Auditoria: `authorized:true` continua obrigatório. Sem uma allowlist personalizada, somente o domínio informado e sua variante www são autorizados nessa operação, preservando a validação HTTPS/DNS/IP. `AUDIT_MODE=disabled` desativa a função.
 
-Sessão: tokens são mantidos em sessionStorage por projeto para restaurar a mesma aba; renovação concorrente é agregada. Busca salva registros em uma única requisição REST de upsert. Cache por instância: dez minutos, com horário original da coleta; até 24 amostras Photon e 12 consultas Overpass. Photon tem prazo total de sete segundos (geocodificação + amostra) e uma contingência Overpass tem prazo de cinco segundos em falhas transitórias. A localização municipal Photon é guardada por 24 horas; cidade/UF são validadas pelo catálogo local IBGE antes de qualquer chamada. Homônimos e registros de outras cidades/estados/países são descartados. Cache antigo de até 12 h só é retornado com `cache:stale`, `state:partial` e aviso. `remark` de timeout sem elementos dispara recuperação, em vez de ser convertido em zero resultados. O servidor saudável passa a receber prioridade e os indisponíveis entram em pausa de 60 s (30 s para 429).
+Sessão: tokens são mantidos em sessionStorage por projeto para restaurar a mesma aba; renovação concorrente é agregada. Busca salva registros em uma única requisição REST de upsert. Cache por instância: dez minutos, com horário original da coleta; até 24 amostras Photon e 12 consultas Overpass. A busca prioriza Overture com prazo total de 13 segundos; em falhas transitórias, Photon recebe dois segundos e Overpass, uma tentativa de 1,5 segundo. A localização municipal Photon é guardada por 24 horas; cidade/UF são validadas pelo catálogo local IBGE antes de qualquer chamada. Homônimos e registros de outras cidades/estados/países são descartados. Cache antigo de até 12 h só é retornado com `cache:stale`, `state:partial` e aviso. `remark` de timeout sem elementos dispara recuperação, em vez de ser convertido em zero resultados. O servidor saudável passa a receber prioridade e os indisponíveis entram em pausa de 60 s (30 s para 429).
 
 Busca e detalhes não consultam Auth nem reservam quota por conta; uma sessão expirada ou o banco indisponível não bloqueiam essas rotas. O limite público é de 30 operações/hora/IP/instância, com intervalo de três segundos. Cabeçalhos de IP enviados pelo visitante são ignorados fora da Vercel. Visitantes salvam resultados no armazenamento local; sincronização em conta é opcional. As políticas RLS do banco permanecem inalteradas.
 
@@ -61,3 +61,11 @@ Catálogo da interface: `GET /data/cities/{UF}.json`, com UF oficial em maiúscu
 A preparação é local: `readLocal`, `persist`, `persistBatch`, carga da conta e abertura da ficha preparam os prompts automaticamente. A resposta HTTP da busca continua leve, com os dados de origem; nenhum prompt é solicitado a um modelo externo. O prompt pronto usa 15 perfis de segmento, dados específicos e 14 seções. A versão automática contém `automatic:true`, `generatorVersion`, `inputKey`, `destination`, `sourceIds`, `expiresAt` e permissões. Campos excluídos por validade, conflito ou licença não retornam por meio da geração automática. A validade acompanha a menor validade de campo/fonte utilizado.
 
 Somente versões manuais precisam persistir seu texto. O serializador omite a versão automática derivada; ela é reconstruída dos dados ao carregar localmente ou na conta. Isso evita duplicar cerca de 13 KB de texto por comércio no armazenamento ou tráfego. Edições são versões com `automatic:false`, preservadas nas gravações. Recalcular não sobrescreve evidências nem snapshots da regra anterior.
+
+## Catálogo com contatos
+
+`OvertureProvider` lê Places PMTiles da release `2026-09-23.1`, com cache de até oito recortes por uma hora. O transporte exige HTTP 206 e content-range correspondente, limite de oito MB por leitura e prazo de seis segundos por requisição. A operação principal inteira tem prazo de 13 s; contingências de 2 s e 1,5 s. Nenhuma URL arbitrária é recebida do cliente para ler arquivos remotos.
+
+IDs `overture-UUID` preservam os contatos e as fontes do mesmo registro, sem juntar empresas apenas pelo nome. Os campos incluem permissões/licença e `providerMeta` registra categoria, release, confiança da fonte e atualização. A confiança da fonte não é probabilidade de fechamento. O frontend recebe somente resultados normalizados, sem o arquivo mundial.
+
+O GET de busca do frontend inclui `v=3` para invalidar consultas CDN da versão que não trazia contatos. Mesma unidade pode receber preenchimento automático de campos ausentes; dados preenchidos não são sobrescritos. Pontuação pode ser `null` quando a base é insuficiente. Telefone, mailto, site e redes são links diretos validados. Um WhatsApp explicitamente publicado recebe `published:true`, mantendo `confirmed` separado; telefone isolado não vira WhatsApp.

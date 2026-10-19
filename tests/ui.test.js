@@ -4,6 +4,7 @@ import {readFile} from 'node:fs/promises';
 import {parseHTML} from 'linkedom';
 import {handleAPI,publicConfig} from '../server/handler.js';
 import {photonResponse} from './fixtures-photon.js';
+import {overtureTransport} from './fixtures-overture.js';
 const cityResponse=async url=>Response.json(JSON.parse(await readFile(new URL('../public'+url,import.meta.url),'utf8')));
 test('fluxo DOM: demonstração, filtro, ficha, briefing, versão, favorito e volta preservando filtro',async()=>{
   const {window,document}=parseHTML(await readFile(new URL('../public/index.html',import.meta.url),'utf8'));
@@ -35,7 +36,7 @@ test('fluxo DOM/HTTP: busca sem cadastro, salva no navegador e preserva resultad
   const memory=new Map(),tabMemory=new Map();
   globalThis.localStorage={getItem:k=>memory.get(k)||null,setItem:(k,v)=>memory.set(k,v),removeItem:k=>memory.delete(k)};
   globalThis.sessionStorage={getItem:k=>tabMemory.get(k)||null,setItem:(k,v)=>tabMemory.set(k,v),removeItem:k=>tabMemory.delete(k)};
-  let sourceCalls=0,stalled=false;
+  let sourceCalls=0,stalled=false;const transport=overtureTransport();
   const setup=async()=>{
     const {window,document}=parseHTML(await readFile(new URL('../public/index.html',import.meta.url),'utf8'));
     for(const d of document.querySelectorAll('dialog')){d.showModal=()=>{d.open=true;};d.close=()=>{d.open=false;d.dispatchEvent(new window.Event('close'));};}
@@ -56,15 +57,17 @@ test('fluxo DOM/HTTP: busca sem cadastro, salva no navegador e preserva resultad
       await handleAPI({url:value,method:options.method,headers:Object.fromEntries(Object.entries(options.headers||{}).map(([key,value])=>[key.toLowerCase(),value])),body:options.body?JSON.parse(options.body):undefined},response,{});
       return Response.json(response.body,{status:response.statusCode});
     }
-    if(value.startsWith('https://photon.komoot.io/')){sourceCalls++;return photonResponse(value);}
+    if(['photon.komoot.io','tiles.overturemaps.org'].some(host=>value.startsWith('https://'+host+'/'))){sourceCalls++;return transport(url,options);}
     throw new Error('Chamada inesperada: '+value);
   };
   let {document,submit}=await setup();await import('../public/app.js?automatic-flow');
   submit(document.querySelector('#search-form'));assert.equal(document.querySelector('#auth-form'),null);
   for(let i=0;i<30&&!document.querySelector('.business-card');i++)await new Promise(resolve=>setImmediate(resolve));
   assert.match(document.querySelector('#results').textContent,/Café do fluxo de teste/);
-  assert.match(document.querySelector('#results').textContent,/Potencial de venda de site/);assert.match(document.querySelector('#results').textContent,/Prompt profissional pronto/);
-  assert.ok(Number(document.querySelector('.score-title strong').textContent)>0);
+  assert.match(document.querySelector('#results').textContent,/Potencial para site/);assert.match(document.querySelector('#results').textContent,/Prompt pronto/);assert.equal(document.querySelector('.contact-chip[href="tel:+551500000000"]').textContent.trim(),'+551500000000');assert.equal(document.querySelector('#filters').hidden,true);
+  document.querySelector('[data-action="filters"]').dispatchEvent(new window.Event('click',{bubbles:true}));assert.equal(document.querySelector('#filters').hidden,false);assert.equal(document.querySelector('[data-action="filters"]').getAttribute('aria-expanded'),'true');
+  document.querySelector('[data-action="filters"]').dispatchEvent(new window.Event('click',{bubbles:true}));assert.equal(document.querySelector('#filters').hidden,true);
+  assert.ok(parseFloat(document.querySelector('.lead-score strong').textContent)>0);
   const stored=JSON.parse([...memory.values()][0]);assert.equal(stored.businesses[0].prompts.length,0,'texto automático é reconstituído dos dados sem ocupar espaço por lead');
   let copied='';Object.defineProperty(globalThis,'navigator',{configurable:true,value:{clipboard:{writeText:async text=>{copied=text;}}}});
   document.querySelector('[data-action="prompt"]').dispatchEvent(new window.Event('click',{bubbles:true}));
@@ -72,7 +75,7 @@ test('fluxo DOM/HTTP: busca sem cadastro, salva no navegador e preserva resultad
   document.querySelector('[data-action="copy-prompt"]').dispatchEvent(new window.Event('click',{bubbles:true}));
   await new Promise(resolve=>setImmediate(resolve));assert.equal(copied,ready,'copia imediatamente sem geração manual');
   document.querySelector('[data-action="close-detail"]').dispatchEvent(new window.Event('click',{bubbles:true}));
-  assert.equal(sourceCalls,2);assert.equal(memory.size,1);assert.equal(tabMemory.size,0);
+  const callsAfterSearch=sourceCalls;assert.ok(callsAfterSearch>=2);assert.equal(memory.size,1);assert.equal(tabMemory.size,0);
   ({document}=await setup());await import('../public/app.js?automatic-reload');
   assert.equal(document.querySelector('#account-name').textContent,'Espaço local');
   assert.match(document.querySelector('#results').textContent,/Café do fluxo de teste/);
@@ -82,7 +85,7 @@ test('fluxo DOM/HTTP: busca sem cadastro, salva no navegador e preserva resultad
   await new Promise(resolve=>setImmediate(resolve));assert.equal(document.querySelector('#prompt-editor').value,edited);
   const afterEdit=JSON.parse([...memory.values()][0]);assert.equal(afterEdit.businesses[0].prompts.length,1);assert.equal(afterEdit.businesses[0].prompts[0].automatic,false);assert.equal(afterEdit.businesses[0].prompts[0].text,edited);
   document.querySelector('[data-action="close-detail"]').dispatchEvent(new window.Event('click',{bubbles:true}));
-  assert.equal(memory.size,1,'recarregar preserva a base local');assert.equal(sourceCalls,2,'recarregar não repete a consulta externa');
+  assert.equal(memory.size,1,'recarregar preserva a base local');assert.equal(sourceCalls,callsAfterSearch,'recarregar não repete a consulta externa');
   document.querySelector('#external-query').value='lento';stalled=true;
   document.querySelector('#search-form').dispatchEvent(new window.Event('submit',{bubbles:true,cancelable:true}));
   assert.ok(document.querySelector('[data-action="cancel-search"]'));

@@ -56,7 +56,7 @@ test('falha Photon recupera por Overpass; HTTP 429 é respeitado sem troca de fo
   let photon=0,overpass=0;
   const fetcher=async url=>{if(String(url).includes('photon.komoot.io')){photon++;return new Response('',{status:503});}overpass++;return Response.json({elements:[{type:'node',id:123,tags:{name:'Registro recuperado',shop:'clothes'}}]});};
   const result=await new BusinessProvider({contact:'test',fetcher}).search(input);
-  assert.equal(result.businesses[0].fields.name.value,'Registro recuperado');assert.equal(photon,1);assert.equal(overpass,1);
+  assert.equal(result.businesses[0].fields.name.value,'Registro recuperado');assert.equal(photon,2);assert.equal(overpass,1);
   let count=0;const limited=new BusinessProvider({contact:'test',fetcher:async()=>{count++;return new Response('',{status:429});}});
   await assert.rejects(()=>limited.search(input),e=>e.code==='LIMIT');await assert.rejects(()=>limited.search(input),e=>e.code==='LIMIT');assert.equal(count,1);
 });
