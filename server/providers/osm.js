@@ -1,7 +1,7 @@
 import { newBusiness, field, clean, safeURL, SEGMENTS, normalizeText } from '../../public/lib/domain.js';
 import { AppError,limitedJSON } from '../security.js';
 import { MUNICIPALITIES } from '../data/municipalities.js';
-const UF={AC:'Acre',AL:'Alagoas',AP:'Amapá',AM:'Amazonas',BA:'Bahia',CE:'Ceará',DF:'Distrito Federal',ES:'Espírito Santo',GO:'Goiás',MA:'Maranhão',MT:'Mato Grosso',MS:'Mato Grosso do Sul',MG:'Minas Gerais',PA:'Pará',PB:'Paraíba',PR:'Paraná',PE:'Pernambuco',PI:'Piauí',RJ:'Rio de Janeiro',RN:'Rio Grande do Norte',RS:'Rio Grande do Sul',RO:'Rondônia',RR:'Roraima',SC:'Santa Catarina',SP:'São Paulo',SE:'Sergipe',TO:'Tocantins'};
+import { STATES as UF } from '../../public/lib/regions.js';
 export const OSM_TAGS={beauty:[['shop','hairdresser|beauty']],health:[['amenity','clinic|doctors|dentist']],food:[['amenity','restaurant|cafe|fast_food']],fashion:[['shop','clothes|fashion|shoes|jewelry']],vehicles:[['shop','car|motorcycle']],auto:[['shop','car_repair|tyres']],estate:[['office','estate_agent']],construction:[['office','architect|construction_company|engineer']],fitness:[['leisure','fitness_centre|sports_centre']],pets:[['shop','pet'],['amenity','veterinary']],accounting:[['office','accountant']],market:[['shop','supermarket|convenience|greengrocer']],furniture:[['shop','furniture|interior_decoration']],education:[['amenity','school|language_school|music_school|training']],other:[['shop','.+'],['office','.+']]};
 const quoted=s=>JSON.stringify(s);
 const ENDPOINTS=['https://overpass-api.de/api/interpreter','https://overpass.private.coffee/api/interpreter'];
@@ -32,7 +32,7 @@ export function normalizeOSM(element,{city,uf,collectedAt}){
   return b;
 }
 export class OSMProvider{
-  constructor({contact,fetcher=fetch,requestTimeoutMs=7000,now=Date.now}){this.contact=contact;this.fetcher=fetcher;this.requestTimeoutMs=requestTimeoutMs;this.now=now;}
+  constructor({contact,fetcher=fetch,requestTimeoutMs=7000,now=Date.now,maxAttempts=2}){this.contact=contact;this.fetcher=fetcher;this.requestTimeoutMs=requestTimeoutMs;this.now=now;this.maxAttempts=maxAttempts;}
   async transport(endpoint,query){
     const controller=new AbortController();let timer;
     const work=(async()=>{
@@ -58,7 +58,7 @@ export class OSMProvider{
     const stale=()=>item.value&&item.staleUntil>this.now()?{...structuredClone(item.value),cache:'stale'}:null;
     const promise=(async()=>{
       let last=new AppError(503,'UNAVAILABLE','As fontes estão temporariamente indisponíveis. Aguarde alguns instantes.');
-      const order=[state.preferred,1-state.preferred].filter(index=>state.cooldowns[index]<=this.now());
+      const order=[state.preferred,1-state.preferred].filter(index=>state.cooldowns[index]<=this.now()).slice(0,this.maxAttempts);
       for(const index of order){
         try{
           const value=await this.transport(ENDPOINTS[index],query);

@@ -14,6 +14,14 @@ Retenção prevista: até 30 dias para verificação/uso antes de revisão. Expo
 
 Dados OSM não comprovam publicação pela própria empresa. Mesmo que exista tag WhatsApp, a implementação não a transforma automaticamente em contato confirmado. Uma pessoa deve conferir o canal do negócio e registrar evidência. Sem site na tag, a conclusão é inconclusiva.
 
+## Photon / índice OpenStreetMap
+
+- [Projeto oficial mantido pela komoot](https://github.com/komoot/photon), [contrato HTTP](https://github.com/komoot/photon/blob/master/docs/api-v1.md) e [filtros por categoria](https://github.com/komoot/photon/blob/master/docs/categories.md), consultados em 19/10/2026.
+- O servidor público `https://photon.komoot.io` aceita uso razoável, sem garantia de disponibilidade; uso excessivo pode ser limitado. O app limita chamadas, reaproveita consultas iguais e respeita HTTP 429 sem recorrer a outra fonte para contorná-lo.
+- Busca de área com `q`, `countrycode=BR` e `layer=city`; correspondência de nome/UF obrigatória. A busca comercial usa a área `bbox`, um único parâmetro `include` com categorias separadas por vírgula (OR) e até 50 candidatos. Cada candidato precisa informar a cidade, estado e país corretos; categoria também é conferida localmente.
+- O índice é uma amostra e pode não incluir telefone, site ou e-mail. Esses campos ficam ausentes; não são inventados nem buscados em páginas de terceiros. As fontes preservam a URL do objeto OSM e ODbL, com identificação do índice Photon. Dados colaborativos podem conter erros e exigem confirmação de identidade.
+- A API de edição do OpenStreetMap não é usada como motor de consulta de comércios.
+
 ## Cadastro e importação autorizados
 
 O usuário declara direitos de retenção, exportação e IA separadamente e informa origem/data. Exportação e IA vêm desmarcadas por padrão. Cada campo corrigido recebe uma nova fonte; valores inalterados preservam sua origem. Duplicatas/homônimos exigem revisão. Não importar bases restritas sob uma autorização genérica falsa.
@@ -40,6 +48,6 @@ Google Maps/Places, Instagram e Facebook não são raspados. Não há leitura de
 
 ## Índice municipal para acelerar a consulta
 
-A [API oficial de Localidades do IBGE](https://servicodados.ibge.gov.br/api/docs/localidades) forneceu os 5.571 nomes/identificadores municipais em 19/10/2026. O snapshot reduzido fica em `server/data/municipalities.js`, somente no servidor; não adiciona uma chamada externa nem peso ao frontend em cada busca. Não contém cadastros de empresas.
+A [API oficial de Localidades do IBGE](https://servicodados.ibge.gov.br/api/docs/localidades) forneceu os 5.571 nomes/identificadores municipais em 19/10/2026. O snapshot reduzido fica em `server/data/municipalities.js`, para validação no servidor. O catálogo da interface fica dividido em 27 arquivos estáticos `public/data/cities/{UF}.json`, cerca de 207 KB no total; só o estado selecionado é carregado e cada catálogo é reutilizado na sessão. Não depende de uma chamada externa para preencher as opções. Não contém cadastros de empresas.
 
 O código oficial delimita a área OSM por `IBGE:GEOCODIGO` ou `ref:IBGE`. A relação OSM [Itapeva/SP, 298034](https://www.openstreetmap.org/relation/298034) foi inspecionada pela API oficial: `admin_level=8`, `IBGE:GEOCODIGO=3522406`. O Distrito Federal usa a área `BR-DF`. A ausência de área ou de comércios na amostra não comprova ausência de negócios reais.

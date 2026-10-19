@@ -39,8 +39,8 @@
           <div class="panel-title"><span class="section-icon" data-icon="radar"></span><div><h2>Explore novas oportunidades</h2><p>Busque sem cadastro: defina sua região e encontre negócios para analisar.</p></div><span id="provider-badge" class="badge neutral">Verificando configuração</span></div>
           <form id="search-form" class="search-form">
             <label class="query-field">O que você procura?<span class="input-wrap"><span data-icon="search"></span><input id="external-query" name="query" placeholder="Busque por comércio, segmento ou palavra-chave" maxlength="100"></span></label>
-            <label>Cidade<input name="city" id="city" value="Itapeva" required maxlength="80" autocomplete="address-level2"></label>
-            <label class="uf-field">UF<select name="uf" id="uf" aria-label="Estado"></select></label>
+            <label class="uf-field">Estado<select name="uf" id="uf" aria-label="Estado"></select></label>
+            <div class="city-field" id="city-picker"><label for="city">Cidade</label><div class="city-input-wrap"><input name="city" id="city" required maxlength="80" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="city-options" aria-describedby="city-help" placeholder="Carregando cidades…" disabled><button type="button" class="city-toggle" aria-label="Mostrar catálogo de cidades" disabled>⌄</button><ul id="city-options" class="city-options" role="listbox" aria-label="Cidades do estado" hidden></ul></div><small id="city-help" data-city-help role="status"></small></div>
             <label>Bairro <span class="optional">opcional</span><input name="district" id="district" placeholder="Todos os bairros" maxlength="80"></label>
             <button type="submit" class="button primary" id="search-button" disabled><span data-icon="search"></span>Buscar comércios</button>
           </form>

@@ -22,6 +22,7 @@ test('HTTP integra busca pública, auditoria protegida e arquivos estáticos',as
   const app=createApp({});await new Promise(r=>app.listen(0,'127.0.0.1',r));t.after(()=>new Promise(r=>app.close(r)));const root=`http://127.0.0.1:${app.address().port}`;
   let r=await fetch(root+'/api/config');assert.equal(r.status,200);assert.equal((await r.json()).ai,'template');
   r=await fetch(root+'/');assert.equal(r.status,200);assert.ok((await r.text()).includes('Buscar comércios'));assert.ok(r.headers.get('content-security-policy').includes("object-src 'none'"));
+  r=await fetch(root+'/data/cities/SP.json');assert.equal(r.status,200);assert.match(r.headers.get('content-type'),/application\/json/);assert.ok((await r.json()).some(city=>city.name==='Itapeva'));
   r=await fetch(root+'/api/audit',{method:'POST',body:'{}'});assert.equal(r.status,401);assert.equal((await r.json()).code,'UNAUTHORIZED');
   r=await fetch(root+'/api/search',{method:'POST',body:'{}'});assert.equal(r.status,400);assert.equal((await r.json()).code,'INPUT');
   r=await fetch(root+'/server/handler.js');assert.equal(r.status,404);

@@ -6,7 +6,7 @@ Prospecção de comércios para criação de sites: busca → ficha com fontes �
 
 O projeto **Prospecta IA** no Supabase já está conectado pelo código. As tabelas, políticas de isolamento entre contas e função de quota foram instaladas e verificadas no banco. A busca OpenStreetMap já vem ativada e identificada com o endereço deste repositório. **Não é necessário criar `.env.local`, copiar chaves ou executar SQL para usar esta instalação.**
 
-1. Abra o site e informe cidade/UF e, se desejar, segmento, palavra-chave e bairro.
+1. Abra o site, escolha o estado e selecione uma cidade no catálogo pesquisável. Se desejar, informe segmento, palavra-chave e bairro.
 2. Clique em **Buscar comércios**. **Não é preciso cadastro, login ou código de acesso**, inclusive para atualizar os detalhes da fonte.
 3. Os novos resultados são salvos automaticamente neste navegador. A conta é opcional para sincronização entre dispositivos; você pode entrar pelo menu quando desejar.
 4. Abra a ficha, confirme a identidade e registre as evidências. A pontuação depende do que foi verificado, sem inventar probabilidade de compra.
@@ -37,12 +37,13 @@ npm run build
 
 ## Busca e disponibilidade
 
-- Fonte: OpenStreetMap, consultado pelo Overpass. Servidor principal `https://overpass-api.de/api/interpreter`; alternativa `https://overpass.private.coffee/api/interpreter` somente em falha transitória. Um HTTP 429 é respeitado, sem trocar de servidor para contornar a quota.
+- Fonte principal: índice Photon/OpenStreetMap (`https://photon.komoot.io`). A área municipal é localizada pela cidade e UF, e os resultados são conferidos por cidade, estado, país e categoria. Se houver falha transitória, uma consulta Overpass com prazo de cinco segundos tenta recuperar o resultado. HTTP 429 é respeitado, sem troca de fonte para contornar limite.
+- Catálogo de cidades por estado com 5.571 nomes oficiais do IBGE, incluindo acentos. Os 27 arquivos locais em `public/data/cities` dispensam outra API para preencher o seletor. Digitar “sao” encontra “São”; trocar a UF limpa a cidade anterior e impede pesquisar uma cidade de outro estado.
 - Cache por dez minutos no navegador e na instância, com agregação de chamadas iguais. Consultas GET públicas permitem cache na CDN do Vercel entre instâncias. Somente respostas bem-sucedidas são armazenadas; erros continuam sem cache. A data original da coleta é preservada.
-- Cidade/UF são resolvidas por um índice local dos 5.571 municípios da API oficial do IBGE (snapshot de 19/10/2026), sem nova chamada de geocodificação. A consulta usa os códigos municipais nas áreas OSM, em vez de pesquisar relações por nome dentro do estado. Cidades desconhecidas são rejeitadas imediatamente; o Distrito Federal usa sua área administrativa estadual. Áreas ausentes no OSM ainda podem produzir resultado vazio.
-- Cada servidor tem prazo total de sete segundos, incluindo leitura da resposta. São no máximo duas tentativas; o navegador encerra a consulta em 18 segundos e oferece **Cancelar busca**. Servidores com falha ficam em pausa temporária, e a última fonte saudável recebe preferência. Um timeout com lista vazia é tratado como falha, nunca como pesquisa concluída sem comércios.
-- Em indisponibilidade, uma consulta bem-sucedida anterior pode ser mostrada por até 12 horas, com aviso e data original. Sem uma consulta salva, o erro é exibido e os registros existentes são preservados.
-- Até 100 objetos da fonte, 50 resultados exibidos por consulta; palavra-chave/bairro filtram essa amostra. Não representa todos os comércios da região e não oferece paginação externa.
+- O índice municipal no servidor valida cidade/UF sem depender de rede. A contingência Overpass usa códigos IBGE nas áreas OSM. A geocodificação do Photon, guardada por 24 horas, resolve homônimos conferindo a UF; candidatos sem cidade/estado correspondentes são descartados.
+- O Photon tem prazo total de sete segundos para localizar a área e consultar a amostra; a contingência Overpass tem cinco segundos. O navegador encerra a operação em 18 segundos e oferece **Cancelar busca**. Um timeout com lista vazia é tratado como falha, nunca como pesquisa concluída sem comércios.
+- Em indisponibilidade, uma consulta bem-sucedida anterior pode ser mostrada por até 12 horas, com aviso e data original. Sem uma consulta salva, o erro é exibido e os registros existentes são preservados. Serviços públicos externos não têm disponibilidade garantida.
+- Até 50 candidatos no Photon; até 100 objetos e 50 resultados na contingência Overpass. Palavra-chave/bairro filtram a amostra. A cobertura é parcial, os contatos podem não estar disponíveis e não há paginação externa.
 - A falta de website no cadastro não comprova ausência de site. Telefones não viram WhatsApp automaticamente. Falhas externas nunca são substituídas por comércios inventados.
 - Atribuição **© OpenStreetMap contributors**, licença ODbL e fontes são preservadas nas exportações. Consulte [fontes e permissões](docs/FONTES.md).
 
@@ -66,7 +67,7 @@ Não há inspeção visual, execução de JavaScript ou teste real de formulári
 
 O repositório já possui integração Git com o projeto Vercel `prospecta-ia`. `vercel.json` define instalação, build com testes, saída `public`, região `gru1` e limite de 60 segundos para a API. Novos commits na branch de produção são enviados pela integração existente; o build falha se as verificações falharem.
 
-Nesta manutenção, o plugin Vercel recusou acesso à conta do projeto com **403**. O código está preparado para a integração existente, mas isso impede administrar a hospedagem ou confirmar sua configuração pelo plugin. Não confunda configuração do código com confirmação de uma publicação no ar; veja [validação](docs/VALIDACAO.md).
+Nesta manutenção, o plugin Vercel recusou acesso à conta do projeto com **403**. O código está preparado para a integração existente, mas isso impede administrar a hospedagem ou confirmar sua configuração pelo plugin. O status da integração no GitHub permite confirmar a conclusão dos deploys, sem administrar o projeto pelo plugin; veja [validação](docs/VALIDACAO.md).
 
 ## Personalização técnica opcional
 

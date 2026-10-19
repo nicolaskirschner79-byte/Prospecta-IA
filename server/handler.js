@@ -1,5 +1,5 @@
 import { AppError,equalSecret,rateLimit,bounded,limitedJSON,guestRateKey } from './security.js';
-import { OSMProvider } from './providers/osm.js';
+import { BusinessProvider } from './providers/businesses.js';
 import { auditWebsite } from './audit.js';
 import { resolveConfig } from './config.js';
 export function publicConfig(input={}){const env=resolveConfig(input);return {search:env.ENABLE_OSM==='true'&&env.PROVIDER_CONTACT?'available':'not_configured',searchAccess:'public',audit:env.AUDIT_MODE!=='disabled'?'available':'not_configured',ai:'template',supabase:env.SUPABASE_URL&&env.SUPABASE_PUBLISHABLE_KEY?{url:env.SUPABASE_URL,key:env.SUPABASE_PUBLISHABLE_KEY}:null,access:env.APP_ACCESS_KEY?'access_key':env.SUPABASE_URL&&env.SUPABASE_PUBLISHABLE_KEY?'supabase':'not_configured'};}
@@ -38,7 +38,7 @@ export async function handleAPI(req,res,input=process.env){
     let result;
     if(route==='search'||route==='details'){
       if(env.ENABLE_OSM!=='true'||!env.PROVIDER_CONTACT)throw new AppError(503,'NOT_CONFIGURED','Fonte de busca não configurada.');
-      const provider=new OSMProvider({contact:env.PROVIDER_CONTACT});
+      const provider=new BusinessProvider({contact:env.PROVIDER_CONTACT});
       if(route==='search'){
         if(typeof body.city!=='string'||typeof body.uf!=='string'||(body.segments&&!Array.isArray(body.segments))||typeof(body.query||'')!=='string'||typeof(body.district||'')!=='string'||(body.query||'').length>100||(body.district||'').length>80)throw new AppError(400,'INPUT','Parâmetros de busca inválidos.');
         result=await bounded(()=>provider.search(body));

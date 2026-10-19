@@ -5,6 +5,7 @@ import { publicConfig,handleAPI } from '../server/handler.js';
 import { OSMProvider,buildQuery } from '../server/providers/osm.js';
 import { authorizedAuditHosts } from '../server/audit.js';
 import { guestRateKey } from '../server/security.js';
+import { photonResponse } from './fixtures-photon.js';
 
 test('instalação funciona sem .env e mantém credenciais de outro projeto separadas',()=>{
   const config=publicConfig({});
@@ -79,11 +80,11 @@ test('API pública busca sem conta nem consulta ao banco, mesmo com token invál
     calls.push(String(url));
     if(String(url).endsWith('/auth/v1/user'))return Response.json({id:'automatic-test-user'});
     if(String(url).endsWith('/rpc/consume_api_quota')){assert.equal(options.headers.Authorization,'Bearer test-token');return Response.json(true);}
-    assert.match(String(url),/overpass/);return Response.json({elements:[{id:100,type:'node',tags:{name:'Loja de teste',shop:'clothes'}}]});
+    assert.equal(new URL(String(url)).hostname,'photon.komoot.io');return photonResponse(url,{name:'Loja de teste',osm_key:'shop',osm_value:'clothes'});
   };
   const res=response();
   await handleAPI({url:'/api/search',method:'POST',headers:{authorization:'Bearer expired-token'},socket:{remoteAddress:'192.0.2.1'},body:{city:'Itapeva',uf:'SP'}},res,{});
-  assert.equal(res.statusCode,200);assert.equal(res.data.businesses[0].fields.name.value,'Loja de teste');assert.equal(calls.length,1);assert.ok(calls.every(url=>url.includes('/api/interpreter')));
+  assert.equal(res.statusCode,200);assert.equal(res.data.businesses[0].fields.name.value,'Loja de teste');assert.equal(calls.length,2);assert.ok(calls.every(url=>new URL(url).hostname==='photon.komoot.io'));
   assert.equal(res.headers['Cache-Control'],'no-store');
 });
 

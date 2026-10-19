@@ -36,7 +36,7 @@ A operação de retenção ocorre antes de gravar. Sem permissão para o nome, n
 
 ## Interface substituível de provedor
 
-`search(input)`, `details(id)`, normalização e registro de evidências por campo. OSMProvider implementa o contrato. Adicionar outro fornecedor exige conferir licença, campos, cobertura, limites, retenção/exportação/IA e testes com transporte substituído antes da ativação. Não retornar dados fictícios em falhas. Google Places não é fallback.
+`search(input)`, `details(id)`, normalização e registro de evidências por campo. BusinessProvider implementa o contrato, priorizando PhotonProvider e usando OSMProvider como contingência. Adicionar outro fornecedor exige conferir licença, campos, cobertura, limites, retenção/exportação/IA e testes com transporte substituído antes da ativação. Não retornar dados fictícios em falhas. Google Places não é fallback.
 
 ## Persistência Auth/Data API
 
@@ -46,8 +46,10 @@ CSV de entrada: cabeçalho `name` obrigatório; demais campos do modelo são opc
 
 Auditoria: `authorized:true` continua obrigatório. Sem uma allowlist personalizada, somente o domínio informado e sua variante www são autorizados nessa operação, preservando a validação HTTPS/DNS/IP. `AUDIT_MODE=disabled` desativa a função.
 
-Sessão: tokens são mantidos em sessionStorage por projeto para restaurar a mesma aba; renovação concorrente é agregada. Busca salva registros em uma única requisição REST de upsert. Cache do provedor: dez minutos, 12 entradas por instância, com horário original da coleta e no máximo duas tentativas de sete segundos em falhas transitórias. Cache antigo de até 12 h só é retornado com `cache:stale`, `state:partial` e aviso. `remark` de timeout sem elementos dispara recuperação, em vez de ser convertido em zero resultados. O servidor saudável passa a receber prioridade e os indisponíveis entram em pausa de 60 s (30 s para 429).
+Sessão: tokens são mantidos em sessionStorage por projeto para restaurar a mesma aba; renovação concorrente é agregada. Busca salva registros em uma única requisição REST de upsert. Cache por instância: dez minutos, com horário original da coleta; até 24 amostras Photon e 12 consultas Overpass. Photon tem prazo total de sete segundos (geocodificação + amostra) e uma contingência Overpass tem prazo de cinco segundos em falhas transitórias. A localização municipal Photon é guardada por 24 horas; cidade/UF são validadas pelo catálogo local IBGE antes de qualquer chamada. Homônimos e registros de outras cidades/estados/países são descartados. Cache antigo de até 12 h só é retornado com `cache:stale`, `state:partial` e aviso. `remark` de timeout sem elementos dispara recuperação, em vez de ser convertido em zero resultados. O servidor saudável passa a receber prioridade e os indisponíveis entram em pausa de 60 s (30 s para 429).
 
 Busca e detalhes não consultam Auth nem reservam quota por conta; uma sessão expirada ou o banco indisponível não bloqueiam essas rotas. O limite público é de 30 operações/hora/IP/instância, com intervalo de três segundos. Cabeçalhos de IP enviados pelo visitante são ignorados fora da Vercel. Visitantes salvam resultados no armazenamento local; sincronização em conta é opcional. As políticas RLS do banco permanecem inalteradas.
 
 O frontend usa GET canônico, cache de até oito pesquisas e cancelamento por AbortController, com prazo de 18 s independente do transporte. Respostas de erro e respostas canceladas não entram no cache. A resposta bem-sucedida inclui `collectedAt` e `cache` (`miss`, `fresh` ou `stale`); cabeçalhos de cache da CDN não são habilitados para erros, auditorias, preferências ou notas.
+
+Catálogo da interface: `GET /data/cities/{UF}.json`, com UF oficial em maiúsculas, retorna `[{id:number,name:string}]`. São arquivos estáticos do mesmo site, com nomes oficiais acentuados e códigos IBGE. Não requer login nem chamada externa. Trocar a UF limpa a seleção; a cidade é validada no catálogo carregado antes da pesquisa.
