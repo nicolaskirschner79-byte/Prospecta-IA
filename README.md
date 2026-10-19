@@ -10,7 +10,7 @@ O projeto **Prospecta IA** no Supabase já está conectado pelo código. As tabe
 2. Clique em **Buscar comércios**. **Não é preciso cadastro, login ou código de acesso**, inclusive para atualizar os detalhes da fonte.
 3. Os novos resultados são salvos automaticamente neste navegador. A conta é opcional para sincronização entre dispositivos; você pode entrar pelo menu quando desejar.
 4. Cada cartão já mostra o potencial comercial de 0–100, a prioridade, os motivos e a confiança da avaliação. A análise inicial usa os dados publicados e hipóteses específicas do segmento; confirmar identidade e registrar evidências melhora a avaliação. A nota não é uma probabilidade estatística de compra.
-5. Abra **Ver prompt pronto** para copiar ou baixar o prompt profissional completo, organizado em 14 seções e adaptado ao segmento, nome, localização e demais dados disponíveis. A personalização adicional é opcional. Contatos e mensagens exigem revisão; WhatsApp só é ativado para um número confirmado com país e DDD.
+5. Abra **Ver prompt pronto** para copiar ou baixar o prompt profissional completo, organizado em 14 seções e adaptado ao segmento, nome, localização e demais dados disponíveis. A personalização adicional é opcional. Nos cartões e na tabela, o botão **WhatsApp** abre a conversa com abordagem pronta para o comércio. Na ficha, o texto pode ser editado antes de abrir. Números publicados sem confirmação do canal são identificados como **a confirmar**; a abertura não envia a mensagem.
 
 Os prompts são preparados automaticamente no navegador por **15 perfis de segmento e uma estrutura de 14 seções**, sem API paga ou configuração de IA. Incluem direção comercial, design e paleta propostos, arquitetura, copy, funcionalidades, ativos, acessibilidade, SEO local, requisitos técnicos e testes. A identidade visual só é descrita como observada quando há registro; dados ausentes são identificados para confirmação. O sistema não executa um modelo generativo. O conteúdo pode ser copiado ou baixado para outra ferramenta, conforme as permissões da fonte.
 
@@ -39,14 +39,14 @@ npm run build
 
 - Fonte principal: **Overture Maps Places**, consultada por recortes PMTiles do catálogo público. A versão integrada é `2026-09-23.1`. O servidor lê somente pequenos intervalos de bytes; não baixa o arquivo mundial e não exige chave de API.
 - A consulta usa o centro do município e uma amostra da área central; quando necessário, amplia para até quatro recortes adjacentes. Cidade, UF, país, categoria, licença e confiança mínima da origem são conferidos. Não representa todos os negócios da cidade.
-- Telefones, e-mails, sites e redes são os publicados no registro. Links de ligação/e-mail/site ficam nos cartões; WhatsApp só aparece quando o canal está explicitamente publicado ou foi confirmado. Telefone não é convertido em WhatsApp.
+- Telefones, e-mails, sites e redes são os publicados no registro. Links de ligação/e-mail/site ficam nos cartões. O botão WhatsApp prioriza o canal explícito e usa como alternativa o telefone completo publicado, com aviso **a confirmar**. Isso não registra o número como WhatsApp confirmado.
 - Photon/OpenStreetMap e Overpass permanecem como contingência em falhas transitórias. HTTP 429 é respeitado, sem trocar de fonte para contornar o limite. Todas as operações possuem prazo e cancelamento.
 - A consulta principal tem prazo total de 13 s; as contingências têm até 2 s e 1,5 s. O navegador encerra a espera em 18 s e oferece cancelar. Falhas preservam a base anterior.
 - Catálogo local de cidades por estado com 5.571 nomes oficiais do IBGE, incluindo acentos. Digitar “sao” encontra “São”; mudar a UF limpa a cidade anterior.
 - Recortes do catálogo são reutilizados por uma hora em até oito entradas por instância; geocodificação é guardada por 24 h. Cache de busca no navegador/CDN continua por dez minutos. Datas originais são preservadas.
 - Até 50 resultados por consulta. Palavra-chave e bairro filtram a amostra; um bairro precisa estar publicado no endereço para ser filtrado. Não há paginação externa.
 - Bases antigas compostas apenas pela amostra OSM sem contato, da mesma cidade selecionada, recebem uma tentativa automática de atualização por sessão. Atualizações preenchem campos ausentes somente quando a mesma unidade é identificada por ID, endereço ou proximidade com nome/cidade coincidentes; campos manuais preenchidos são preservados. Homônimos não são fundidos só pelo nome.
-- A falta de website no cadastro não comprova ausência de site. Telefones não viram WhatsApp automaticamente. Falhas externas nunca são substituídas por comércios inventados.
+- A falta de website no cadastro não comprova ausência de site. Abrir o WhatsApp por telefone publicado não comprova que exista conta ou que o contato seja atual. Falhas externas nunca são substituídas por comércios inventados.
 - Atribuição Overture Maps, fornecedores e licenças de cada registro são preservados; registros OSM mantêm **© OpenStreetMap contributors** e ODbL. Consulte [fontes e permissões](docs/FONTES.md).
 
 ## Avaliação e prompts automáticos

@@ -4,7 +4,7 @@ Manutenção em 19/10/2026. Runtime: Node.js 24.19.0.
 
 ## Código e fluxos automatizados
 
-`npm run build` executa verificação de sintaxe/ativos e a suíte Node. A suíte contém **92 testes**, incluindo:
+`npm run build` executa verificação de sintaxe/ativos e a suíte Node. A suíte contém **99 testes**, incluindo:
 
 - Configuração sem `.env.local`, projeto Supabase conectado, substituições opcionais sem misturar chaves de projetos diferentes e ausência de segredos na resposta pública.
 - Busca/detalhes públicos sem chamadas a Auth/REST, inclusive com token inválido; limite por visitante/instância, intervalo entre chamadas e proteção contra cabeçalho de IP forjado fora da Vercel. Auditoria mantém autenticação pelo contrato `/auth/v1/user` e reserva de quota. Nestes testes de contrato, o transporte externo é substituído por fixtures.
@@ -68,3 +68,7 @@ O build do Vercel foi configurado para executar os testes antes da publicação.
 Os novos testes simulam servidores sem resposta, corpo de resposta que nunca termina, resposta parcial, timeout dentro de JSON HTTP 200, cache vencido, ambas as fontes fora do ar e cancelamento. São fixtures determinísticas; não são medições de desempenho do provedor real.
 
 O navegador usa cache local da pesquisa sem repetir HTTP, preserva cópias independentes dos objetos, impõe prazo de 18 s e distingue cancelamento de falha. GET público bem-sucedido emite a política de cache da CDN; entrada inválida e operações privadas mantêm no-store. Não foi possível verificar HIT/STALE da CDN publicada ou logs de produção por causa do bloqueio 403 do plugin Vercel.
+
+## WhatsApp com abordagem pronta
+
+Sete testes específicos verificam destino exato, prioridade do canal explícito, telefone como alternativa sem confirmação, mensagens diferentes nos 15 segmentos, serviços e presença digital, codificação integral da edição, restrições de fonte/validade e bloqueio de demonstração/Não contatar/encerrados. O fluxo DOM/HTTP verifica o botão do cartão e a atualização do link ao editar o texto na ficha; abrir não altera a etapa nem envia mensagem.

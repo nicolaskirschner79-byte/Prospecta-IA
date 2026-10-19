@@ -69,3 +69,11 @@ Somente versões manuais precisam persistir seu texto. O serializador omite a ve
 IDs `overture-UUID` preservam os contatos e as fontes do mesmo registro, sem juntar empresas apenas pelo nome. Os campos incluem permissões/licença e `providerMeta` registra categoria, release, confiança da fonte e atualização. A confiança da fonte não é probabilidade de fechamento. O frontend recebe somente resultados normalizados, sem o arquivo mundial.
 
 O GET de busca do frontend inclui `v=3` para invalidar consultas CDN da versão que não trazia contatos. Mesma unidade pode receber preenchimento automático de campos ausentes; dados preenchidos não são sobrescritos. Pontuação pode ser `null` quando a base é insuficiente. Telefone, mailto, site e redes são links diretos validados. Um WhatsApp explicitamente publicado recebe `published:true`, mantendo `confirmed` separado; telefone isolado não vira WhatsApp.
+
+## Abordagem pronta por comércio
+
+`approach(business,settings,now?)` monta localmente uma proposta curta por nome, cidade, segmento, serviços exportáveis e presença digital; não afirma inspeção, interesse nem resultados de venda. Vendedor/agência vêm das configurações existentes. `whatsappDraft(business,settings,{message?,now?})` retorna `{url,message,number,confirmed,published,requiresCheck}` ou `null`. O texto editado substitui integralmente o rascunho e é codificado em `text` no link oficial `https://wa.me/NUMERO`.
+
+O destino prioriza o campo WhatsApp com número internacional válido; aceita links wa.me e api/web.whatsapp.com/send. Em seguida, pode usar o telefone comercial completo, sem adivinhar país, DDD ou dígitos. Essa alternativa exibe **WhatsApp a confirmar**, sem preencher o campo WhatsApp, mudar a pontuação, registrar confirmação ou alterar a negociação. O contato pode não ter conta WhatsApp; a verificação ocorre no aplicativo antes do envio manual.
+
+Demonstração, Não contatar, unidade encerrada/duplicada/fora de escopo, fonte expirada, campo conflitante ou falta de direitos de retenção/exportação não produzem link acionável. O navegador apenas abre uma conversa para revisão. Nenhuma chamada à API de envio ou envio automático é executado.

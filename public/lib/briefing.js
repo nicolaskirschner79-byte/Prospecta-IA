@@ -122,7 +122,4 @@ export function generateForAI(b, settings, options) {
   // Exportação deve também ser autorizada; nunca recuperar um campo removido pela projeção de IA.
   return generateBriefing(allowed,settings,options);
 }
-export function approach(b, settings) {
-  const intro=settings.seller?`Olá! Sou ${settings.seller}${settings.agency?`, da ${settings.agency}`:''}.`:'Olá! Trabalho com desenvolvimento de sites.';
-  return `${intro} Gostaria de conversar com a equipe de ${get(b,'name','seu comércio')}. Posso apresentar uma ideia de site para organizar as informações do negócio e facilitar o contato?`;
-}
+export {approach} from './outreach.js';

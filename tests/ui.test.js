@@ -68,6 +68,12 @@ test('fluxo DOM/HTTP: busca sem cadastro, salva no navegador e preserva resultad
   document.querySelector('[data-action="filters"]').dispatchEvent(new window.Event('click',{bubbles:true}));assert.equal(document.querySelector('#filters').hidden,false);assert.equal(document.querySelector('[data-action="filters"]').getAttribute('aria-expanded'),'true');
   document.querySelector('[data-action="filters"]').dispatchEvent(new window.Event('click',{bubbles:true}));assert.equal(document.querySelector('#filters').hidden,true);
   assert.ok(parseFloat(document.querySelector('.lead-score strong').textContent)>0);
+  const cardWhatsApp=document.querySelector('[data-whatsapp-draft]');assert.ok(cardWhatsApp);assert.equal(new URL(cardWhatsApp.getAttribute('href')).pathname,'/551500000000');assert.match(new URL(cardWhatsApp.getAttribute('href')).searchParams.get('text'),/Café do fluxo de teste/);assert.match(cardWhatsApp.textContent,/a confirmar/);
+  document.querySelector('[data-action="detail"]').dispatchEvent(new window.Event('click',{bubbles:true}));
+  document.querySelector('[data-action="tab"][data-tab="commercial"]').dispatchEvent(new window.Event('click',{bubbles:true}));
+  assert.equal(document.querySelector('#whatsapp-action a').getAttribute('href'),cardWhatsApp.getAttribute('href'));
+  const message='Olá!\nUma proposta & uma dúvida para o café.';document.querySelector('#approach-message').value=message;document.querySelector('#approach-message').dispatchEvent(new window.Event('input',{bubbles:true}));assert.equal(new URL(document.querySelector('#whatsapp-action a').getAttribute('href')).searchParams.get('text'),message);
+  document.querySelector('[data-action="close-detail"]').dispatchEvent(new window.Event('click',{bubbles:true}));
   const stored=JSON.parse([...memory.values()][0]);assert.equal(stored.businesses[0].prompts.length,0,'texto automático é reconstituído dos dados sem ocupar espaço por lead');
   let copied='';Object.defineProperty(globalThis,'navigator',{configurable:true,value:{clipboard:{writeText:async text=>{copied=text;}}}});
   document.querySelector('[data-action="prompt"]').dispatchEvent(new window.Event('click',{bubbles:true}));
