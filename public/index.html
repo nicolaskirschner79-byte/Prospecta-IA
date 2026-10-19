@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080d18">
+  <meta name="description" content="Organize oportunidades de criação de sites, analise evidências e prepare briefings comerciais com o Prospecta IA.">
+  <title>Prospecta IA · Prospecção com contexto</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css"><script type="module" src="/app.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Pular para o conteúdo</a>
+  <aside class="sidebar" id="sidebar" aria-label="Navegação principal">
+    <a class="brand" href="#"><span class="brand-symbol" aria-hidden="true">P<span></span></span><span data-brand>prospecta<span class="brand-ai">IA</span></span></a>
+    <p class="nav-label">SEU ESPAÇO DE PROSPECÇÃO</p>
+    <nav>
+      <button class="nav-item active" data-nav="search"><span data-icon="search"></span>Buscar comércios</button>
+      <button class="nav-item" data-nav="saved"><span data-icon="bookmark"></span>Oportunidades salvas <span id="saved-count" class="nav-count">0</span></button>
+      <button class="nav-item" data-nav="deals"><span data-icon="columns"></span>Negociações</button>
+      <button class="nav-item" data-nav="settings"><span data-icon="settings"></span>Configurações</button>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="sidebar-note"><span class="tiny-dot"></span><strong>Evidências antes da abordagem.</strong><p>Transforme informação em uma conversa relevante.</p></div>
+      <button class="account-button" data-action="auth"><span class="avatar small" id="account-avatar">L</span><span><strong id="account-name">Espaço local</strong><small id="account-caption">Neste navegador</small></span><span data-icon="chevron"></span></button>
+    </div>
+  </aside>
+  <div class="workspace">
+    <header class="topbar">
+      <button class="icon-button mobile-only" id="menu-toggle" aria-label="Abrir menu" aria-expanded="false" aria-controls="sidebar" data-action="menu"><span data-icon="menu"></span></button>
+      <div class="breadcrumb">Workspace <span>/</span> <strong id="breadcrumb">Buscar comércios</strong></div>
+      <div class="topbar-right"><span class="mode-pill" id="mode-pill"><span class="tiny-dot"></span>Dados reais · local</span><button class="text-button" data-action="toggle-demo" id="demo-toggle">Explorar demonstração</button></div>
+    </header>
+    <main id="main" tabindex="-1">
+      <div id="mode-banner" class="mode-banner" hidden></div>
+      <section id="search-page">
+        <div class="page-heading"><div><p class="eyebrow"><span></span> INTELIGÊNCIA PARA A SUA PROSPECÇÃO</p><h1>Seu próximo projeto<br>começa com uma <em>boa oportunidade.</em></h1><p class="subheading">Descubra negócios, entenda o contexto e prepare uma abordagem que faz sentido.</p></div><button class="button secondary" data-action="new"><span data-icon="plus"></span>Cadastrar comércio</button></div>
+        <div class="stats" id="stats"></div>
+        <section class="search-panel" aria-label="Pesquisa de comércios">
+          <div class="panel-title"><span class="section-icon" data-icon="radar"></span><div><h2>Explore novas oportunidades</h2><p>Defina sua região e encontre negócios para analisar.</p></div><span id="provider-badge" class="badge neutral">Verificando configuração</span></div>
+          <form id="search-form" class="search-form">
+            <label class="query-field">O que você procura?<span class="input-wrap"><span data-icon="search"></span><input id="external-query" name="query" placeholder="Busque por comércio, segmento ou palavra-chave" maxlength="100"></span></label>
+            <label>Cidade<input name="city" id="city" value="Itapeva" required maxlength="80" autocomplete="address-level2"></label>
+            <label class="uf-field">UF<select name="uf" id="uf" aria-label="Estado"></select></label>
+            <label>Bairro <span class="optional">opcional</span><input name="district" id="district" placeholder="Todos os bairros" maxlength="80"></label>
+            <button type="submit" class="button primary" id="search-button"><span data-icon="search"></span>Buscar comércios</button>
+          </form>
+          <div class="search-foot"><p id="source-note"><span data-icon="info"></span>Fonte de busca não configurada. Cadastre ou importe uma base autorizada para começar.</p><button class="text-button" data-action="import"><span data-icon="upload"></span>Importar CSV</button></div>
+        </section>
+        <section class="results-section" aria-label="Resultados e filtros">
+          <div class="results-heading"><div><h2 id="results-title">Comércios para explorar <span id="result-count">0</span></h2><p id="results-subtitle">Os filtros abaixo se aplicam apenas à base carregada.</p></div><div class="results-actions"><button class="button secondary compact filter-toggle" data-action="filters"><span data-icon="filter"></span>Filtros <span id="filter-count"></span></button><button class="text-button" data-action="export"><span data-icon="download"></span>Exportar CSV</button></div></div>
+          <div class="results-layout">
+            <aside class="filters" id="filters" aria-label="Filtros locais">
+              <div class="filter-title"><strong><span data-icon="filter"></span>Filtros locais</strong><button class="text-button" data-action="clear-filters">Limpar</button></div>
+              <label>Filtrar resultados<input id="local-query" type="search" placeholder="Nome, serviço ou palavra-chave"></label>
+              <fieldset><legend>Segmento do comércio</legend><div id="segment-options" class="segment-options"></div></fieldset>
+              <label>Situação do site<select id="filter-digital"></select></label>
+              <label>Prioridade<select id="filter-priority"><option value="">Todas as prioridades</option value="high">Alta</option><option value="medium">Média</option><option value="low">Baixa</option><option value="pending">Aguardando análise</option></select></label>
+              <label>Canal disponível<select id="filter-contact"><option value="">Qualquer contato</option><option value="whatsapp">WhatsApp confirmado</option><option value="phone">Telefone</option><option value="email">E-mail</option><option value="unknown">Contato não confirmado</option></select></label>
+              <label>Evidências<select id="filter-coverage"><option value="">Qualquer cobertura</option><option value="70">70% ou mais</option><option value="90">90% ou mais</option><option value="incomplete">Abaixo de 70%</option></select></label>
+              <label>Etapa comercial<select id="filter-stage"></select></label>
+              <label>Verificação desde<input type="date" id="filter-date"></label>
+              <label class="check"><input type="checkbox" id="filter-favorite">Somente favoritos</label>
+              <p class="filter-note">Prioridade é um índice de oportunidade. Não representa probabilidade de compra.</p>
+            </aside>
+            <div class="results-body">
+              <div class="results-toolbar"><div class="view-toggle" aria-label="Visualização"><button class="icon-button selected" data-action="view-grid" aria-label="Visualizar em cards" aria-pressed="true"><span data-icon="grid"></span></button><button class="icon-button" data-action="view-table" aria-label="Visualizar em tabela" aria-pressed="false"><span data-icon="list"></span></button></div><label class="sort-label">Ordenar por<select id="sort"><option value="priority">Prioridade</option><option value="updated">Mais recentes</option><option value="name">Nome A–Z</option></select></label></div>
+              <div id="active-filters" class="active-filters"></div>
+              <div id="results" aria-live="polite"></div>
+              <div id="pagination" class="pagination"></div>
+              <p class="attribution" id="attribution" hidden>© OpenStreetMap contributors · <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">ODbL 1.0 e atribuição</a>. Cobertura parcial; confirme os dados com a empresa.</p>
+            </div>
+          </div>
+        </section>
+      </section>
+      <section id="settings-page" hidden></section>
+      <footer class="footer"><span>Prospecta IA <span class="footer-dot">·</span> Contexto para criar conexões.</span><span>Briefings por template · sem envio automático de mensagens</span></footer>
+    </main>
+  </div>
+  <dialog id="detail-dialog" class="detail-dialog" aria-labelledby="detail-title"><div id="detail-content"></div></dialog>
+  <dialog id="form-dialog" class="form-dialog" aria-labelledby="form-title"><div id="form-content"></div></dialog>
+  <div id="toast" role="status" class="toast" hidden></div>
+</body>
+</html>
